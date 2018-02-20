@@ -167,6 +167,42 @@ public class LockActivityTest {
         assertThat(reqParams, is(notNullValue()));
         assertThat(reqParams, hasEntry("extra", "value"));
         assertThat(reqParams, hasEntry("mfa_code", "123456"));
+        assertThat(reqParams, not(hasKey("mfa_token")));
+        assertThat(reqParams, not(hasKey("otp")));
+    }
+
+    @Test
+    public void shouldCallOIDCDatabaseLoginWithOTPCodeAndMFAToken() throws Exception {
+        Auth0 account = new Auth0("cliendId", "domain");
+        account.setOIDCConformant(true);
+        Options options = mock(Options.class);
+        when(options.getAccount()).thenReturn(account);
+        when(options.getAuthenticationAPIClient()).thenReturn(client);
+        when(options.getScope()).thenReturn("openid user photos");
+        when(options.getAudience()).thenReturn("aud");
+        when(options.getAuthenticationParameters()).thenReturn(basicParameters);
+        LockActivity activity = new LockActivity(configuration, options, lockView, webProvider);
+
+        DatabaseLoginEvent event = new DatabaseLoginEvent("username", "password");
+        event.setVerificationCode("123456");
+        event.setMFAToken("mfaToken");
+        activity.onDatabaseAuthenticationRequest(event);
+
+        verify(lockView).showProgress(true);
+        verify(options).getAuthenticationAPIClient();
+        verify(client).login("username", "password", "connection");
+        verify(authRequest).addAuthenticationParameters(mapCaptor.capture());
+        verify(authRequest).start(any(BaseCallback.class));
+        verify(authRequest).setScope("openid user photos");
+        verify(authRequest, never()).setAudience("aud");
+        verify(configuration, atLeastOnce()).getDatabaseConnection();
+
+        Map<String, String> reqParams = mapCaptor.getValue();
+        assertThat(reqParams, is(notNullValue()));
+        assertThat(reqParams, hasEntry("extra", "value"));
+        assertThat(reqParams, hasEntry("otp", "123456"));
+        assertThat(reqParams, hasEntry("mfa_token", "mfaToken"));
+        assertThat(reqParams, not(hasKey("mfa_code")));
     }
 
     @Test
