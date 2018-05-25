@@ -32,16 +32,16 @@
 
     <ImageView
         android:id="@+id/com_auth0_lock_checkable_text_icon"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="12dp"
+        android:layout_height="12dp"
         android:layout_gravity="center_vertical"
-        android:src="@drawable/com_auth0_lock_ic_check_success" />
+        android:src="@drawable/com_auth0_lock_ic_check_circle_green_24dp" />
 
     <TextView
         android:id="@+id/com_auth0_lock_checkable_text_description"
         android:layout_gravity="center_vertical"
-        android:layout_marginLeft="@dimen/com_auth0_lock_widget_with_text_horizontal_padding"
-        android:layout_marginStart="@dimen/com_auth0_lock_widget_with_text_horizontal_padding"
+        android:layout_marginLeft="8dp"
+        android:layout_marginStart="8dp"
         tools:text="Option value or description"
         style="@style/Lock.Theme.Text.PasswordPolicy" />
 </LinearLayout>
