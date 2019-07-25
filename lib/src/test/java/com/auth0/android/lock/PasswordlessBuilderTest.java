@@ -1,7 +1,6 @@
 package com.auth0.android.lock;
 
 import android.app.Activity;
-import android.app.Application;
 import android.content.BroadcastReceiver;
 import android.content.IntentFilter;
 import android.content.res.Resources;
@@ -17,7 +16,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.robolectric.Robolectric;
-import org.robolectric.RobolectricGradleTestRunner;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
@@ -26,7 +24,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(constants = android.support.v7.appcompat.BuildConfig.class, sdk = 23, manifest = Config.NONE)
+@Config(sdk = 23)
 public class PasswordlessBuilderTest {
 
     @Rule
@@ -37,12 +35,12 @@ public class PasswordlessBuilderTest {
     LockCallback callback;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         MockitoAnnotations.initMocks(this);
     }
 
     @Test
-    public void shouldThrowIfCallbackIsMissing() throws Exception {
+    public void shouldThrowIfCallbackIsMissing() {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("Missing callback.");
 
@@ -52,7 +50,7 @@ public class PasswordlessBuilderTest {
     }
 
     @Test
-    public void shouldThrowIfAccountIsMissing() throws Exception {
+    public void shouldThrowIfAccountIsMissing() {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("Missing Auth0 account information.");
 
@@ -62,7 +60,7 @@ public class PasswordlessBuilderTest {
     }
 
     @Test
-    public void shouldThrowIfAccountIsMissingAlsoFromResources() throws Exception {
+    public void shouldThrowIfAccountIsMissingAlsoFromResources() {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("Missing Auth0 account information.");
 
@@ -76,7 +74,7 @@ public class PasswordlessBuilderTest {
     }
 
     @Test
-    public void shouldCreateAccountFromResources() throws Exception {
+    public void shouldCreateAccountFromResources() {
         Activity activity = Mockito.mock(Activity.class);
         Resources resources = Mockito.mock(Resources.class);
         Mockito.when(activity.getApplicationContext()).thenReturn(RuntimeEnvironment.application);

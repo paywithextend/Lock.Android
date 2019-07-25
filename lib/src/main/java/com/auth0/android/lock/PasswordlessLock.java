@@ -62,7 +62,7 @@ public class PasswordlessLock {
 
         @Override
         public void onReceive(Context context, Intent data) {
-            processEvent(data);
+            processEvent(context, data);
         }
     };
 
@@ -143,7 +143,8 @@ public class PasswordlessLock {
         LocalBroadcastManager.getInstance(context).registerReceiver(this.receiver, filter);
     }
 
-    private void processEvent(Intent data) {
+    private void processEvent(Context context, Intent data) {
+        LocalBroadcastManager.getInstance(context).unregisterReceiver(this.receiver);
         String action = data.getAction();
         switch (action) {
             case Constants.AUTHENTICATION_ACTION:
@@ -168,6 +169,7 @@ public class PasswordlessLock {
     /**
      * Helper Builder to generate the Lock.Options to use on the Auth0 Passwordless Authentication.
      */
+    @SuppressWarnings({"unused", "UnusedReturnValue"})
     public static class Builder {
         private static final String TAG = Builder.class.getSimpleName();
         private Options options;
@@ -317,9 +319,11 @@ public class PasswordlessLock {
          *
          * @param style a valid AuthButtonSize.
          * @return the current builder instance
+         * @deprecated Small button style is no longer offered since it is not compliant
+         * to some providers branding guidelines. e.g. google
          */
+        @Deprecated
         public Builder withAuthButtonSize(@AuthButtonSize int style) {
-            options.setAuthButtonSize(style);
             return this;
         }
 

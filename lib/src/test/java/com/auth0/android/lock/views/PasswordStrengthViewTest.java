@@ -2,21 +2,21 @@ package com.auth0.android.lock.views;
 
 import android.app.Activity;
 
-import com.auth0.android.lock.BuildConfig;
+import com.auth0.android.lock.internal.configuration.PasswordComplexity;
 import com.auth0.android.lock.internal.configuration.PasswordStrength;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
-import org.robolectric.RobolectricGradleTestRunner;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-@RunWith(RobolectricGradleTestRunner.class)
-@Config(constants = BuildConfig.class, sdk = 21, manifest = Config.NONE)
+@RunWith(RobolectricTestRunner.class)
+@Config(sdk = 21)
 public class PasswordStrengthViewTest {
 
     public static final String PASSWORD_TOO_LONG = "otPtgNsthiK98lw61BEwevHChF87YMNqVZDpvxgAWBESkBL" +
@@ -45,13 +45,13 @@ public class PasswordStrengthViewTest {
     private PasswordStrengthView view;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         Activity context = Robolectric.buildActivity(Activity.class).create().get();
         view = new PasswordStrengthView(context);
     }
 
     @Test
-    public void shouldHandlePasswordStrengthNONE() throws Exception {
+    public void shouldHandlePasswordStrengthNONE() {
         view.setStrength(PasswordStrength.NONE);
 
         assertTrue(view.isValid(PASSWORD_NUMERIC));
@@ -79,7 +79,7 @@ public class PasswordStrengthViewTest {
     }
 
     @Test
-    public void shouldHandlePasswordStrengthLOW() throws Exception {
+    public void shouldHandlePasswordStrengthLOW() {
         view.setStrength(PasswordStrength.LOW);
 
         assertTrue(view.isValid(PASSWORD_NUMERIC));
@@ -107,7 +107,7 @@ public class PasswordStrengthViewTest {
     }
 
     @Test
-    public void shouldHandlePasswordStrengthFAIR() throws Exception {
+    public void shouldHandlePasswordStrengthFAIR() {
         view.setStrength(PasswordStrength.FAIR);
 
         assertFalse(view.isValid(PASSWORD_NUMERIC));
@@ -135,7 +135,7 @@ public class PasswordStrengthViewTest {
     }
 
     @Test
-    public void shouldHandlePasswordStrengthGOOD() throws Exception {
+    public void shouldHandlePasswordStrengthGOOD() {
         view.setStrength(PasswordStrength.GOOD);
 
         assertFalse(view.isValid(PASSWORD_NUMERIC));
@@ -163,7 +163,7 @@ public class PasswordStrengthViewTest {
     }
 
     @Test
-    public void shouldHandlePasswordStrengthEXCELLENT() throws Exception {
+    public void shouldHandlePasswordStrengthEXCELLENT() {
         view.setStrength(PasswordStrength.EXCELLENT);
 
         assertFalse(view.isValid(PASSWORD_NUMERIC));
@@ -185,6 +185,61 @@ public class PasswordStrengthViewTest {
         assertFalse(view.isValid(PASSWORD_6_LONG));
         assertFalse(view.isValid(PASSWORD_1_LONG));
 
+        assertFalse(view.isValid(PASSWORD_EMPTY));
+        assertFalse(view.isValid(PASSWORD_TOO_LONG));
+        assertFalse(view.isValid(null));
+    }
+
+    @Test
+    public void shouldOverrideMinLength() {
+        PasswordComplexity passwordComplexity;
+
+        // NONE is normally >= 1
+        passwordComplexity = new PasswordComplexity(PasswordStrength.NONE, 3);
+        view.setPasswordComplexity(passwordComplexity);
+
+        assertFalse(view.isValid("a"));
+        assertTrue(view.isValid("abc"));
+        assertFalse(view.isValid(PASSWORD_EMPTY));
+        assertFalse(view.isValid(PASSWORD_TOO_LONG));
+        assertFalse(view.isValid(null));
+
+        // LOW is normally >= 6
+        passwordComplexity = new PasswordComplexity(PasswordStrength.LOW, 8);
+        view.setPasswordComplexity(passwordComplexity);
+
+        assertFalse(view.isValid("abcdef"));
+        assertTrue(view.isValid("abcdefgh"));
+        assertFalse(view.isValid(PASSWORD_EMPTY));
+        assertFalse(view.isValid(PASSWORD_TOO_LONG));
+        assertFalse(view.isValid(null));
+
+        // FAIR is normally >= 8
+        passwordComplexity = new PasswordComplexity(PasswordStrength.FAIR, 10);
+        view.setPasswordComplexity(passwordComplexity);
+
+        assertFalse(view.isValid("ABCdefg9"));
+        assertTrue(view.isValid("ABCdefghi9"));
+        assertFalse(view.isValid(PASSWORD_EMPTY));
+        assertFalse(view.isValid(PASSWORD_TOO_LONG));
+        assertFalse(view.isValid(null));
+
+        // GOOD is normally >= 8
+        passwordComplexity = new PasswordComplexity(PasswordStrength.GOOD, 11);
+        view.setPasswordComplexity(passwordComplexity);
+
+        assertFalse(view.isValid("ABCdefg9"));
+        assertTrue(view.isValid("ABCdefghij9"));
+        assertFalse(view.isValid(PASSWORD_EMPTY));
+        assertFalse(view.isValid(PASSWORD_TOO_LONG));
+        assertFalse(view.isValid(null));
+
+        // EXCELLENT is normally >= 10
+        passwordComplexity = new PasswordComplexity(PasswordStrength.EXCELLENT, 15);
+        view.setPasswordComplexity(passwordComplexity);
+
+        assertFalse(view.isValid("ABCdefgh9!"));
+        assertTrue(view.isValid("ABCdefghijklm9!"));
         assertFalse(view.isValid(PASSWORD_EMPTY));
         assertFalse(view.isValid(PASSWORD_TOO_LONG));
         assertFalse(view.isValid(null));

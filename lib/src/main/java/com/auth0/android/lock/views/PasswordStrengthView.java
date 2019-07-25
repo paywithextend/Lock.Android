@@ -24,6 +24,7 @@
 
 package com.auth0.android.lock.views;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.support.annotation.NonNull;
@@ -31,12 +32,11 @@ import android.util.AttributeSet;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.auth0.android.lock.R;
+import com.auth0.android.lock.internal.configuration.PasswordComplexity;
 import com.auth0.android.lock.internal.configuration.PasswordStrength;
 import java.util.regex.Pattern;
 
 public class PasswordStrengthView extends LinearLayout {
-
-    private static final String TAG = PasswordStrengthView.class.getSimpleName();
 
     private static final int MAX_IDENTICAL_CHARACTERS = 2;
     private static final int MAX_LENGTH = 128;
@@ -48,12 +48,11 @@ public class PasswordStrengthView extends LinearLayout {
 
     private final Pattern patternUppercase = Pattern.compile("^.*[A-Z]+.*$");
     private final Pattern patternLowercase = Pattern.compile("^.*[a-z]+.*$");
-    private final Pattern patternSpecial =
-            Pattern.compile("^.*[ !\"#\\$%&'\\(\\)\\*\\+,-\\./:;<=>\\?@\\[\\\\\\]\\^_`{\\|}~]+.*$");
+    private final Pattern patternSpecial = Pattern.compile("^.*[ !\"#\\$%&'\\(\\)\\*\\+,-\\./:;<=>\\?@\\[\\\\\\]\\^_`{\\|}~]+.*$");
     private final Pattern patternNumeric = Pattern.compile("^.*[0-9]+.*$");
     private final Pattern patternIdentical = Pattern.compile("^.*(?=(.)\\1{" + MAX_IDENTICAL_CHARACTERS + ",}).*$");
 
-    @PasswordStrength private int strength;
+    private PasswordComplexity complexity;
 
     private TextView mustHave;
     private TextView titleAtLeast;
@@ -93,17 +92,15 @@ public class PasswordStrengthView extends LinearLayout {
         mustHave = (TextView) findViewById(R.id.com_auth0_lock_password_strength_title_must_have);
         titleAtLeast = (TextView) findViewById(R.id.com_auth0_lock_password_strength_title_at_least);
 
-        optionLength = (CheckableOptionView) findViewById(R.id.com_auth0_lock_password_strength_option_length);
+        optionLength = findViewById(R.id.com_auth0_lock_password_strength_option_length);
         optionLength.setMandatory(true);
-        optionIdenticalCharacters =
-                (CheckableOptionView) findViewById(R.id.com_auth0_lock_password_strength_option_identical_characters);
+        optionIdenticalCharacters = findViewById(R.id.com_auth0_lock_password_strength_option_identical_characters);
         optionIdenticalCharacters.setMandatory(true);
         optionIdenticalCharacters.setChecked(true);
-        optionLowercase = (CheckableOptionView) findViewById(R.id.com_auth0_lock_password_strength_option_lowercase);
-        optionUppercase = (CheckableOptionView) findViewById(R.id.com_auth0_lock_password_strength_option_uppercase);
-        optionNumeric = (CheckableOptionView) findViewById(R.id.com_auth0_lock_password_strength_option_numeric);
-        optionSpecialCharacters =
-                (CheckableOptionView) findViewById(R.id.com_auth0_lock_password_strength_option_special_characters);
+        optionLowercase = findViewById(R.id.com_auth0_lock_password_strength_option_lowercase);
+        optionUppercase = findViewById(R.id.com_auth0_lock_password_strength_option_uppercase);
+        optionNumeric = findViewById(R.id.com_auth0_lock_password_strength_option_numeric);
+        optionSpecialCharacters = findViewById(R.id.com_auth0_lock_password_strength_option_special_characters);
 
         if (normalTextColor != -1) {
             mustHave.setTextColor(normalTextColor);
@@ -139,7 +136,8 @@ public class PasswordStrengthView extends LinearLayout {
     /**
      * @see "https://auth0.com/docs/connections/database/password-strength"
      */
-    private void showPolicy() {
+    @SuppressLint("StringFormatInvalid") private void showPolicy() {
+        int strength = complexity.getPasswordPolicy();
         if (strength == PasswordStrength.NONE) {
             setEnabled(false);
             setVisibility(GONE);
@@ -152,17 +150,14 @@ public class PasswordStrengthView extends LinearLayout {
         optionUppercase.setMandatory(strength == PasswordStrength.FAIR);
         optionNumeric.setMandatory(strength == PasswordStrength.FAIR);
 
-        titleAtLeast.setVisibility(
-                strength == PasswordStrength.FAIR || strength == PasswordStrength.LOW ? GONE : VISIBLE);
-        String lengthRequirements =
-                getContext().getResources().getString(R.string.com_auth0_lock_password_strength_chars_length);
+        titleAtLeast.setVisibility(strength == PasswordStrength.FAIR || strength == PasswordStrength.LOW ? GONE : VISIBLE);
+        String lengthRequirements = getContext().getResources().getString(R.string.com_auth0_lock_password_strength_chars_length);
         optionLength.setText(String.format(lengthRequirements, getMinimumLength()));
 
         optionLowercase.setVisibility(strength == PasswordStrength.LOW ? GONE : VISIBLE);
         optionUppercase.setVisibility(strength == PasswordStrength.LOW ? GONE : VISIBLE);
         optionNumeric.setVisibility(strength == PasswordStrength.LOW ? GONE : VISIBLE);
-        optionSpecialCharacters.setVisibility(
-                strength == PasswordStrength.EXCELLENT || strength == PasswordStrength.GOOD ? VISIBLE : GONE);
+        optionSpecialCharacters.setVisibility(strength == PasswordStrength.EXCELLENT || strength == PasswordStrength.GOOD ? VISIBLE : GONE);
         optionIdenticalCharacters.setVisibility(strength == PasswordStrength.EXCELLENT ? VISIBLE : GONE);
     }
 
@@ -216,7 +211,11 @@ public class PasswordStrengthView extends LinearLayout {
     }
 
     private int getMinimumLength() {
-        switch (strength) {
+        Integer minLengthOverride = complexity.getMinLengthOverride();
+        if (minLengthOverride != null) {
+            return minLengthOverride;
+        }
+        switch (complexity.getPasswordPolicy()) {
             case PasswordStrength.EXCELLENT:
                 return MIN_LENGTH_EXCELLENT;
             case PasswordStrength.GOOD:
@@ -235,9 +234,19 @@ public class PasswordStrengthView extends LinearLayout {
      * Sets the current level of Strength that this widget is going to validate.
      *
      * @param strength the required strength level.
+     * @deprecated use the {@link #setPasswordComplexity(PasswordComplexity)} method
      */
-    public void setStrength(@PasswordStrength int strength) {
-        this.strength = strength;
+    @Deprecated public void setStrength(@PasswordStrength int strength) {
+        this.setPasswordComplexity(new PasswordComplexity(strength, null));
+    }
+
+    /**
+     * Sets the password complexity options that this widget is going to validate.
+     *
+     * @param complexity the password complexity to require on this widget
+     */
+    public void setPasswordComplexity(PasswordComplexity complexity) {
+        this.complexity = complexity;
         showPolicy();
     }
 
@@ -254,19 +263,19 @@ public class PasswordStrengthView extends LinearLayout {
 
         boolean length = hasMinimumLength(password, getMinimumLength());
         boolean other = true;
-        switch (strength) {
+        switch (complexity.getPasswordPolicy()) {
             case PasswordStrength.EXCELLENT:
-                boolean atLeast = atLeastThree(hasLowercaseCharacters(password), hasUppercaseCharacters(password),
-                        hasNumericCharacters(password), hasSpecialCharacters(password));
+                boolean atLeast =
+                        atLeastThree(hasLowercaseCharacters(password), hasUppercaseCharacters(password), hasNumericCharacters(password),
+                                hasSpecialCharacters(password));
                 other = hasIdenticalCharacters(password) && atLeast;
                 break;
             case PasswordStrength.GOOD:
-                other = atLeastThree(hasLowercaseCharacters(password), hasUppercaseCharacters(password),
-                        hasNumericCharacters(password), hasSpecialCharacters(password));
+                other = atLeastThree(hasLowercaseCharacters(password), hasUppercaseCharacters(password), hasNumericCharacters(password),
+                        hasSpecialCharacters(password));
                 break;
             case PasswordStrength.FAIR:
-                other = allThree(hasLowercaseCharacters(password), hasUppercaseCharacters(password),
-                        hasNumericCharacters(password));
+                other = allThree(hasLowercaseCharacters(password), hasUppercaseCharacters(password), hasNumericCharacters(password));
                 break;
             case PasswordStrength.LOW:
             case PasswordStrength.NONE:

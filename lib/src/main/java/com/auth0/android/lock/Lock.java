@@ -66,7 +66,7 @@ public class Lock {
 
         @Override
         public void onReceive(Context context, Intent data) {
-            processEvent(data);
+            processEvent(context, data);
         }
     };
 
@@ -144,7 +144,8 @@ public class Lock {
         LocalBroadcastManager.getInstance(context).registerReceiver(this.receiver, filter);
     }
 
-    private void processEvent(Intent data) {
+    private void processEvent(Context context, Intent data) {
+        LocalBroadcastManager.getInstance(context).unregisterReceiver(this.receiver);
         String action = data.getAction();
         switch (action) {
             case Constants.AUTHENTICATION_ACTION:
@@ -173,6 +174,7 @@ public class Lock {
     /**
      * Helper Builder to generate the Lock.Options to use on the Auth0 Authentication.
      */
+    @SuppressWarnings({"unused", "UnusedReturnValue"})
     public static class Builder {
         private static final String TAG = Builder.class.getSimpleName();
         private Options options;
@@ -328,9 +330,11 @@ public class Lock {
          *
          * @param style a valid AuthButtonSize.
          * @return the current builder instance
+         * @deprecated Small button style is no longer offered since it is not compliant
+         * to some providers branding guidelines. e.g. google
          */
+        @Deprecated
         public Builder withAuthButtonSize(@AuthButtonSize int style) {
-            options.setAuthButtonSize(style);
             return this;
         }
 
@@ -433,6 +437,22 @@ public class Lock {
          */
         public Builder setDefaultDatabaseConnection(String connectionName) {
             options.useDatabaseConnection(connectionName);
+            return this;
+        }
+
+        /**
+         * Enterprise connections based on 'ad', 'adfs' and 'waad' strategies can log their
+         * users in from within the Lock widget using their email and password. This is known as
+         * Active Authentication.
+         * By whitelisting the connections here, the Universal Login Page is used instead and the
+         * login is delegated to the browser application.
+         * Enterprise connections allowed for this client will use Active Authentication by default.
+         *
+         * @param connections the list of 'ad', 'adfs', or 'waad' enterprise connections that will use Web Authentication instead.
+         * @return the current builder instance
+         */
+        public Builder enableEnterpriseWebAuthenticationFor(@NonNull List<String> connections) {
+            options.setEnterpriseConnectionsUsingWebForm(connections);
             return this;
         }
 
@@ -548,6 +568,19 @@ public class Lock {
          */
         public Builder setMustAcceptTerms(boolean mustAcceptTerms) {
             options.setMustAcceptTerms(mustAcceptTerms);
+            return this;
+        }
+
+        /**
+         * Displays the Privacy Policy and Terms of Service footer on the Sign Up screen.
+         * Note: The footer will always be shown if the mustAcceptTerms flag has been enabled.
+         * The default value is true.
+         *
+         * @param showTerms whether the Terms of Service are displayed.
+         * @return the current builder instance
+         */
+        public Builder setShowTerms(boolean showTerms) {
+            options.setShowTerms(showTerms);
             return this;
         }
 

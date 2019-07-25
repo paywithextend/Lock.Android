@@ -1,5 +1,84 @@
 # Change Log
 
+## [2.14.1](https://github.com/auth0/Lock.Android/tree/2.14.1) (2019-06-06)
+[Full Changelog](https://github.com/auth0/Lock.Android/compare/2.14.0...2.14.1)
+
+**Fixed**
+- Remove entirely the small social button style [\#537](https://github.com/auth0/Lock.Android/pull/537) ([lbalmaceda](https://github.com/lbalmaceda))
+- Define custom email regex to validate emails [\#534](https://github.com/auth0/Lock.Android/pull/534) ([lbalmaceda](https://github.com/lbalmaceda))
+
+## [2.14.0](https://github.com/auth0/Lock.Android/tree/2.14.0) (2019-04-30)
+From this release on, the option to display social connections in small styled buttons is no longer available due to branding compliance reasons. All the social connections will now be displayed as large styled buttons.
+[Full Changelog](https://github.com/auth0/Lock.Android/compare/2.13.0...2.14.0)
+
+**Changed**
+- Remove "Small" social button style [\#529](https://github.com/auth0/Lock.Android/pull/529) ([lbalmaceda](https://github.com/lbalmaceda))
+- Update google-oauth2 strategy logo [\#528](https://github.com/auth0/Lock.Android/pull/528) ([lbalmaceda](https://github.com/lbalmaceda))
+
+## [2.13.0](https://github.com/auth0/Lock.Android/tree/2.13.0) (2019-04-17)
+[Full Changelog](https://github.com/auth0/Lock.Android/compare/2.12.1...2.13.0)
+
+**Changed**
+- Use auth0.android 1.15.2 [\#526](https://github.com/auth0/Lock.Android/pull/526) ([lbalmaceda](https://github.com/lbalmaceda))
+- Update facebook icon to comply with new branding [\#525](https://github.com/auth0/Lock.Android/pull/525) ([lbalmaceda](https://github.com/lbalmaceda))
+
+## [2.12.1](https://github.com/auth0/Lock.Android/tree/2.12.1) (2019-02-22)
+[Full Changelog](https://github.com/auth0/Lock.Android/compare/2.12.0...2.12.1)
+
+**Fixed**
+- Parse 'password_leaked' error message [\#522](https://github.com/auth0/Lock.Android/pull/522) ([lbalmaceda](https://github.com/lbalmaceda))
+
+## [2.12.0](https://github.com/auth0/Lock.Android/tree/2.12.0) (2019-01-30)
+[Full Changelog](https://github.com/auth0/Lock.Android/compare/2.11.0...2.12.0)
+
+**Changed**
+- Use latest Auth0.Android SDK [\#520](https://github.com/auth0/Lock.Android/pull/520) ([lbalmaceda](https://github.com/lbalmaceda))
+
+## [2.11.1](https://github.com/auth0/Lock.Android/tree/2.11.1) (2018-10-16)
+[Full Changelog](https://github.com/auth0/Lock.Android/compare/2.11.0...2.11.1)
+
+**Fixed**
+- Handle Tab change manually on ModeSelectionView [\#499](https://github.com/auth0/Lock.Android/pull/499) ([lbalmaceda](https://github.com/lbalmaceda))
+
+## [2.11.0](https://github.com/auth0/Lock.Android/tree/2.11.0) (2018-10-05)
+[Full Changelog](https://github.com/auth0/Lock.Android/compare/2.10.0...2.11.0)
+
+**Added**
+- Added showTerms feature flag [\#487](https://github.com/auth0/Lock.Android/pull/487) ([cocojoe](https://github.com/cocojoe))
+
+**Fixed**
+- Use target SDK 28 and latest Auth0 SDK version [\#484](https://github.com/auth0/Lock.Android/pull/484) ([lbalmaceda](https://github.com/lbalmaceda))
+
+## [2.10.0](https://github.com/auth0/Lock.Android/tree/2.10.0) (2018-09-14)
+[Full Changelog](https://github.com/auth0/Lock.Android/compare/2.9.0...2.10.0)
+
+**Added**
+- Allow to override the password minimum length [\#474](https://github.com/auth0/Lock.Android/pull/474) ([lbalmaceda](https://github.com/lbalmaceda))
+
+## [2.9.0](https://github.com/auth0/Lock.Android/tree/2.9.0) (2018-07-25)
+[Full Changelog](https://github.com/auth0/Lock.Android/compare/2.8.6...2.9.0)
+
+**Added**
+- Allow to disable 'ActiveAuth' on enterprise Connections [\#471](https://github.com/auth0/Lock.Android/pull/471) ([lbalmaceda](https://github.com/lbalmaceda))
+
+## [2.8.6](https://github.com/auth0/Lock.Android/tree/2.8.6) (2018-07-20)
+[Full Changelog](https://github.com/auth0/Lock.Android/compare/2.8.5...2.8.6)
+
+**Fixed**
+- Fix CustomTabsController issues [\#469](https://github.com/auth0/Lock.Android/pull/469) ([lbalmaceda](https://github.com/lbalmaceda))
+
+## [2.8.5](https://github.com/auth0/Lock.Android/tree/2.8.5) (2018-07-19)
+[Full Changelog](https://github.com/auth0/Lock.Android/compare/2.8.4...2.8.5)
+
+**Fixed**
+- Enable MFA support for OIDC conformant clients [\#451](https://github.com/auth0/Lock.Android/pull/451) ([lbalmaceda](https://github.com/lbalmaceda))
+
+## [2.8.4](https://github.com/auth0/Lock.Android/tree/2.8.4) (2018-07-13)
+[Full Changelog](https://github.com/auth0/Lock.Android/compare/2.8.3...2.8.4)
+
+**Fixed**
+- Fix WebAuth issues by updating SDK to 1.13.1 [\#465](https://github.com/auth0/Lock.Android/pull/465) ([lbalmaceda](https://github.com/lbalmaceda))
+
 ## [2.8.3](https://github.com/auth0/Lock.Android/tree/2.8.3) (2018-03-19)
 [Full Changelog](https://github.com/auth0/Lock.Android/compare/2.8.2...2.8.3)
 

@@ -24,6 +24,7 @@
 
 package com.auth0.android.lock.views;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -55,6 +56,7 @@ import com.auth0.android.lock.internal.configuration.Theme;
 import com.auth0.android.lock.views.interfaces.LockWidgetForm;
 import com.squareup.otto.Bus;
 
+@SuppressLint("ViewConstructor")
 public class ClassicLockView extends LinearLayout implements LockWidgetForm {
 
     private static final String TAG = ClassicLockView.class.getSimpleName();
@@ -105,6 +107,8 @@ public class ClassicLockView extends LinearLayout implements LockWidgetForm {
         LayoutParams wrapHeightParams = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         LayoutParams formLayoutParams = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, 1);
 
+        boolean displayTerms = configuration.showTerms() || configuration.mustAcceptTerms();
+
         headerView = new HeaderView(getContext(), lockTheme);
         resetHeaderTitle();
         addView(headerView, wrapHeightParams);
@@ -116,15 +120,17 @@ public class ClassicLockView extends LinearLayout implements LockWidgetForm {
         formLayout = new FormLayout(this);
         addView(formLayout, formLayoutParams);
 
-        bottomBanner = inflate(getContext(), R.layout.com_auth0_lock_terms_layout, null);
-        bottomBanner.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showSignUpTermsDialog(null);
-            }
-        });
-        bottomBanner.setVisibility(GONE);
-        addView(bottomBanner, wrapHeightParams);
+        if (displayTerms) {
+            bottomBanner = inflate(getContext(), R.layout.com_auth0_lock_terms_layout, null);
+            bottomBanner.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showSignUpTermsDialog(null);
+                }
+            });
+            bottomBanner.setVisibility(GONE);
+            addView(bottomBanner, wrapHeightParams);
+        }
 
         actionButton = new ActionButton(getContext(), lockTheme);
         actionButton.setOnClickListener(new OnClickListener() {
@@ -157,7 +163,7 @@ public class ClassicLockView extends LinearLayout implements LockWidgetForm {
         }
 
         if (configuration.getInitialScreen() == InitialScreen.SIGN_UP) {
-            showBottomBanner(true);
+            showBottomBanner(displayTerms);
             updateButtonLabel(R.string.com_auth0_lock_action_sign_up);
         } else if (configuration.allowForgotPassword() && configuration.getInitialScreen() == InitialScreen.FORGOT_PASSWORD) {
             showChangePasswordForm(true);
@@ -182,9 +188,9 @@ public class ClassicLockView extends LinearLayout implements LockWidgetForm {
 
     private void showConfigurationMissingLayout(final boolean showRetry) {
         final View errorLayout = LayoutInflater.from(getContext()).inflate(R.layout.com_auth0_lock_error_layout, this, false);
-        TextView tvTitle = (TextView) errorLayout.findViewById(R.id.com_auth0_lock_error_title);
-        TextView tvError = (TextView) errorLayout.findViewById(R.id.com_auth0_lock_error_subtitle);
-        TextView tvAction = (TextView) errorLayout.findViewById(R.id.com_auth0_lock_error_action);
+        TextView tvTitle = errorLayout.findViewById(R.id.com_auth0_lock_error_title);
+        TextView tvError = errorLayout.findViewById(R.id.com_auth0_lock_error_subtitle);
+        TextView tvAction = errorLayout.findViewById(R.id.com_auth0_lock_error_action);
 
         if (showRetry) {
             tvTitle.setText(R.string.com_auth0_lock_recoverable_error_title);
@@ -297,7 +303,9 @@ public class ClassicLockView extends LinearLayout implements LockWidgetForm {
     }
 
     private void showSignUpTerms(boolean show) {
-        bottomBanner.setVisibility(show ? VISIBLE : GONE);
+        if (bottomBanner != null) {
+            bottomBanner.setVisibility(show ? VISIBLE : GONE);
+        }
     }
 
     /**
@@ -306,6 +314,7 @@ public class ClassicLockView extends LinearLayout implements LockWidgetForm {
      *
      * @param acceptCallback the callback to receive the acceptance. Can be null.
      */
+    @SuppressLint("StringFormatInvalid")
     private void showSignUpTermsDialog(@Nullable DialogInterface.OnClickListener acceptCallback) {
         final String content = getResources().getString(R.string.com_auth0_lock_sign_up_terms_dialog_message, configuration.getTermsURL(), configuration.getPrivacyURL());
         final AlertDialog.Builder builder = new AlertDialog.Builder(getContext())
@@ -319,7 +328,7 @@ public class ClassicLockView extends LinearLayout implements LockWidgetForm {
         }
 
         //the dialog needs to be shown before we can get it's view.
-        final TextView message = (TextView) builder.show().findViewById(android.R.id.message);
+        final TextView message = builder.show().findViewById(android.R.id.message);
         if (message != null) {
             message.setMovementMethod(LinkMovementMethod.getInstance());
         }
@@ -344,7 +353,7 @@ public class ClassicLockView extends LinearLayout implements LockWidgetForm {
     }
 
     public void showMFACodeForm(DatabaseLoginEvent event) {
-        MFACodeFormView form = new MFACodeFormView(this, event.getUsernameOrEmail(), event.getPassword());
+        MFACodeFormView form = new MFACodeFormView(this, event.getUsernameOrEmail(), event.getPassword(), event.getMFAToken());
         updateHeaderTitle(R.string.com_auth0_lock_title_mfa_input_code);
         addSubForm(form);
     }

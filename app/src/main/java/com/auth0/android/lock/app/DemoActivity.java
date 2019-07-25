@@ -38,8 +38,8 @@ import android.widget.LinearLayout;
 import android.widget.RadioGroup;
 
 import com.auth0.android.Auth0;
+import com.auth0.android.Auth0Exception;
 import com.auth0.android.authentication.AuthenticationException;
-import com.auth0.android.lock.AuthButtonSize;
 import com.auth0.android.lock.AuthenticationCallback;
 import com.auth0.android.lock.InitialScreen;
 import com.auth0.android.lock.Lock;
@@ -48,6 +48,7 @@ import com.auth0.android.lock.PasswordlessLock;
 import com.auth0.android.lock.UsernameStyle;
 import com.auth0.android.lock.utils.LockException;
 import com.auth0.android.provider.AuthCallback;
+import com.auth0.android.provider.VoidCallback;
 import com.auth0.android.provider.WebAuthProvider;
 import com.auth0.android.result.Credentials;
 
@@ -69,7 +70,6 @@ public class DemoActivity extends AppCompatActivity {
     private CheckBox checkboxConnectionsPasswordless;
     private CheckBox checkboxHideMainScreenTitle;
     private RadioGroup groupDefaultDB;
-    private RadioGroup groupSocialStyle;
     private RadioGroup groupUsernameStyle;
     private CheckBox checkboxLoginAfterSignUp;
     private CheckBox checkboxScreenLogIn;
@@ -78,7 +78,6 @@ public class DemoActivity extends AppCompatActivity {
     private RadioGroup groupInitialScreen;
 
     @Override
-    @SuppressWarnings("ConstantConditions")
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
@@ -87,32 +86,31 @@ public class DemoActivity extends AppCompatActivity {
         rootLayout = findViewById(R.id.scrollView);
 
         //Basic
-        groupSubmitMode = (RadioGroup) findViewById(R.id.group_submitmode);
-        checkboxClosable = (CheckBox) findViewById(R.id.checkbox_closable);
-        checkboxHideMainScreenTitle = (CheckBox) findViewById(R.id.checkbox_hide_title);
+        groupSubmitMode = findViewById(R.id.group_submitmode);
+        checkboxClosable = findViewById(R.id.checkbox_closable);
+        checkboxHideMainScreenTitle = findViewById(R.id.checkbox_hide_title);
 
-        checkboxConnectionsDB = (CheckBox) findViewById(R.id.checkbox_connections_db);
-        checkboxConnectionsEnterprise = (CheckBox) findViewById(R.id.checkbox_connections_enterprise);
-        checkboxConnectionsSocial = (CheckBox) findViewById(R.id.checkbox_connections_social);
-        checkboxConnectionsPasswordless = (CheckBox) findViewById(R.id.checkbox_connections_Passwordless);
+        checkboxConnectionsDB = findViewById(R.id.checkbox_connections_db);
+        checkboxConnectionsEnterprise = findViewById(R.id.checkbox_connections_enterprise);
+        checkboxConnectionsSocial = findViewById(R.id.checkbox_connections_social);
+        checkboxConnectionsPasswordless = findViewById(R.id.checkbox_connections_Passwordless);
 
-        groupPasswordlessChannel = (RadioGroup) findViewById(R.id.group_passwordless_channel);
-        groupPasswordlessMode = (RadioGroup) findViewById(R.id.group_passwordless_mode);
+        groupPasswordlessChannel = findViewById(R.id.group_passwordless_channel);
+        groupPasswordlessMode = findViewById(R.id.group_passwordless_mode);
 
         //Advanced
-        groupDefaultDB = (RadioGroup) findViewById(R.id.group_default_db);
-        groupSocialStyle = (RadioGroup) findViewById(R.id.group_social_style);
-        groupUsernameStyle = (RadioGroup) findViewById(R.id.group_username_style);
-        checkboxLoginAfterSignUp = (CheckBox) findViewById(R.id.checkbox_login_after_signup);
+        groupDefaultDB = findViewById(R.id.group_default_db);
+        groupUsernameStyle = findViewById(R.id.group_username_style);
+        checkboxLoginAfterSignUp = findViewById(R.id.checkbox_login_after_signup);
 
-        checkboxScreenLogIn = (CheckBox) findViewById(R.id.checkbox_enable_login);
-        checkboxScreenSignUp = (CheckBox) findViewById(R.id.checkbox_enable_signup);
-        checkboxScreenReset = (CheckBox) findViewById(R.id.checkbox_enable_reset);
-        groupInitialScreen = (RadioGroup) findViewById(R.id.group_initial_screen);
+        checkboxScreenLogIn = findViewById(R.id.checkbox_enable_login);
+        checkboxScreenSignUp = findViewById(R.id.checkbox_enable_signup);
+        checkboxScreenReset = findViewById(R.id.checkbox_enable_reset);
+        groupInitialScreen = findViewById(R.id.group_initial_screen);
 
         //Buttons
-        final LinearLayout advancedContainer = (LinearLayout) findViewById(R.id.advanced_container);
-        CheckBox checkboxShowAdvanced = (CheckBox) findViewById(R.id.checkbox_show_advanced);
+        final LinearLayout advancedContainer = findViewById(R.id.advanced_container);
+        CheckBox checkboxShowAdvanced = findViewById(R.id.checkbox_show_advanced);
         checkboxShowAdvanced.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
@@ -120,7 +118,7 @@ public class DemoActivity extends AppCompatActivity {
             }
         });
 
-        Button btnShowLockClassic = (Button) findViewById(R.id.btn_show_lock_classic);
+        Button btnShowLockClassic = findViewById(R.id.btn_show_lock_classic);
         btnShowLockClassic.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -128,7 +126,7 @@ public class DemoActivity extends AppCompatActivity {
             }
         });
 
-        Button btnShowLockPasswordless = (Button) findViewById(R.id.btn_show_lock_passwordless);
+        Button btnShowLockPasswordless = findViewById(R.id.btn_show_lock_passwordless);
         btnShowLockPasswordless.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -136,20 +134,34 @@ public class DemoActivity extends AppCompatActivity {
             }
         });
 
-        Button btnShowUniversalLogin = (Button) findViewById(R.id.btn_show_universal_login);
+        Button btnShowUniversalLogin = findViewById(R.id.btn_show_universal_login);
         btnShowUniversalLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 showWebAuth();
             }
         });
+
+        Button btnClearSession = findViewById(R.id.btn_clear_session);
+        btnClearSession.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                clearSession();
+            }
+        });
     }
 
     private void showWebAuth() {
-        WebAuthProvider.init(getAccount())
+        WebAuthProvider.login(getAccount())
                 .withScheme("demo")
                 .withAudience(String.format("https://%s/userinfo", getString(R.string.com_auth0_domain)))
-                .start(this, webCallback);
+                .start(this, loginCallback);
+    }
+
+    private void clearSession() {
+        WebAuthProvider.logout(getAccount())
+                .withScheme("demo")
+                .start(this, logoutCallback);
     }
 
     private void showClassicLock() {
@@ -158,12 +170,6 @@ public class DemoActivity extends AppCompatActivity {
         builder.closable(checkboxClosable.isChecked());
         builder.useLabeledSubmitButton(groupSubmitMode.getCheckedRadioButtonId() == R.id.radio_use_label);
         builder.loginAfterSignUp(checkboxLoginAfterSignUp.isChecked());
-
-        if (groupSocialStyle.getCheckedRadioButtonId() == R.id.radio_social_style_big) {
-            builder.withAuthButtonSize(AuthButtonSize.BIG);
-        } else if (groupSocialStyle.getCheckedRadioButtonId() == R.id.radio_social_style_small) {
-            builder.withAuthButtonSize(AuthButtonSize.SMALL);
-        }
 
         if (groupUsernameStyle.getCheckedRadioButtonId() == R.id.radio_username_style_email) {
             builder.withUsernameStyle(UsernameStyle.EMAIL);
@@ -193,6 +199,7 @@ public class DemoActivity extends AppCompatActivity {
                 builder.setDefaultDatabaseConnection("Username-Password-Authentication");
             }
         }
+
         builder.hideMainScreenTitle(checkboxHideMainScreenTitle.isChecked());
         lock = builder.build(this);
 
@@ -204,12 +211,6 @@ public class DemoActivity extends AppCompatActivity {
         final PasswordlessLock.Builder builder = PasswordlessLock.newBuilder(getAccount(), callback);
         builder.withScheme("demo");
         builder.closable(checkboxClosable.isChecked());
-
-        if (groupSocialStyle.getCheckedRadioButtonId() == R.id.radio_social_style_big) {
-            builder.withAuthButtonSize(AuthButtonSize.BIG);
-        } else if (groupSocialStyle.getCheckedRadioButtonId() == R.id.radio_social_style_small) {
-            builder.withAuthButtonSize(AuthButtonSize.SMALL);
-        }
 
         if (groupPasswordlessMode.getCheckedRadioButtonId() == R.id.radio_use_link) {
             builder.useLink();
@@ -277,7 +278,6 @@ public class DemoActivity extends AppCompatActivity {
      *
      * @param message the text to show.
      */
-    @SuppressWarnings("ConstantConditions")
     private void showResult(String message) {
         Snackbar.make(rootLayout, message, Snackbar.LENGTH_LONG).show();
     }
@@ -299,7 +299,7 @@ public class DemoActivity extends AppCompatActivity {
         }
     };
 
-    private AuthCallback webCallback = new AuthCallback() {
+    private AuthCallback loginCallback = new AuthCallback() {
         @Override
         public void onFailure(@NonNull Dialog dialog) {
             dialog.show();
@@ -313,6 +313,18 @@ public class DemoActivity extends AppCompatActivity {
         @Override
         public void onSuccess(@NonNull Credentials credentials) {
             showResult("OK > " + credentials.getAccessToken());
+        }
+    };
+
+    private VoidCallback logoutCallback = new VoidCallback() {
+        @Override
+        public void onFailure(Auth0Exception error) {
+            showResult("Log out cancelled");
+        }
+
+        @Override
+        public void onSuccess(Void payload) {
+            showResult("Logged out!");
         }
     };
 }

@@ -29,7 +29,6 @@ import android.support.annotation.Nullable;
 import android.support.annotation.StyleRes;
 import android.util.Log;
 
-import com.auth0.android.lock.AuthButtonSize;
 import com.auth0.android.lock.InitialScreen;
 import com.auth0.android.lock.UsernameStyle;
 import com.auth0.android.lock.utils.CustomField;
@@ -60,13 +59,12 @@ public class Configuration {
     private boolean allowShowPassword;
     private boolean usernameRequired;
     private boolean mustAcceptTerms;
+    private boolean showTerms;
     private boolean useLabeledSubmitButton;
     private boolean hideMainScreenTitle;
     private boolean passwordlessAutoSubmit;
     @UsernameStyle
     private int usernameStyle;
-    @AuthButtonSize
-    private int socialButtonStyle;
     private boolean loginAfterSignUp;
     @PasswordlessMode
     private int passwordlessMode;
@@ -83,7 +81,12 @@ public class Configuration {
         String defaultDatabaseName = options.getDefaultDatabaseConnection();
         Set<String> connectionSet = allowedConnections != null ? new HashSet<>(allowedConnections) : new HashSet<String>();
         this.defaultDatabaseConnection = filterDatabaseConnections(connections, connectionSet, defaultDatabaseName);
-        this.enterpriseConnections = filterConnections(connections, connectionSet, AuthType.ENTERPRISE);
+
+        List<String> webAuthEnabledConnections = options.getEnterpriseConnectionsUsingWebForm();
+        Set<String> webAuthEnabledConnectionSet = webAuthEnabledConnections != null ? new HashSet<>(webAuthEnabledConnections) : new HashSet<String>();
+        List<OAuthConnection> allEnterprise = filterConnections(connections, connectionSet, AuthType.ENTERPRISE);
+        this.enterpriseConnections = enableWebAuthentication(allEnterprise, webAuthEnabledConnectionSet);
+
         this.passwordlessConnections = filterConnections(connections, connectionSet, AuthType.PASSWORDLESS);
         this.socialConnections = filterConnections(connections, connectionSet, AuthType.SOCIAL);
         parseLocalOptions(options);
@@ -166,12 +169,21 @@ public class Configuration {
         return filtered;
     }
 
+    @NonNull
+    private List<OAuthConnection> enableWebAuthentication(@NonNull List<OAuthConnection> connections, @NonNull Set<String> webAuthEnabledConnections) {
+        for (OAuthConnection c : connections) {
+            if (webAuthEnabledConnections.contains(c.getName())) {
+                ((Connection) c).disableActiveFlow();
+            }
+        }
+        return connections;
+    }
 
     private void parseLocalOptions(Options options) {
         usernameStyle = options.usernameStyle();
-        socialButtonStyle = options.authButtonSize();
         loginAfterSignUp = options.loginAfterSignUp();
         mustAcceptTerms = options.mustAcceptTerms();
+        showTerms = options.showTerms();
         useLabeledSubmitButton = options.useLabeledSubmitButton();
         hideMainScreenTitle = options.hideMainScreenTitle();
         passwordlessAutoSubmit = options.rememberLastPasswordlessAccount();
@@ -244,11 +256,6 @@ public class Configuration {
         return initialScreen;
     }
 
-    @AuthButtonSize
-    public int getSocialButtonStyle() {
-        return socialButtonStyle;
-    }
-
     @UsernameStyle
     public int getUsernameStyle() {
         return usernameStyle;
@@ -259,9 +266,9 @@ public class Configuration {
         return passwordlessMode;
     }
 
-    @PasswordStrength
-    public int getPasswordPolicy() {
-        return defaultDatabaseConnection == null ? PasswordStrength.NONE : defaultDatabaseConnection.getPasswordPolicy();
+    @NonNull
+    public PasswordComplexity getPasswordComplexity() {
+        return defaultDatabaseConnection == null ? new PasswordComplexity(PasswordStrength.NONE, null) : defaultDatabaseConnection.getPasswordComplexity();
     }
 
     public boolean loginAfterSignUp() {
@@ -297,6 +304,10 @@ public class Configuration {
 
     public boolean mustAcceptTerms() {
         return mustAcceptTerms;
+    }
+
+    public boolean showTerms() {
+        return showTerms;
     }
 
     public boolean useLabeledSubmitButton() {

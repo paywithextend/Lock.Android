@@ -35,7 +35,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.robolectric.RobolectricGradleTestRunner;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 import java.util.HashMap;
@@ -46,20 +46,21 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.anyMap;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 
-@RunWith(RobolectricGradleTestRunner.class)
-@Config(constants = com.auth0.android.lock.BuildConfig.class, sdk = 21, manifest = Config.NONE)
+@RunWith(RobolectricTestRunner.class)
+@Config(sdk = 21)
 public class DatabaseSignUpEventTest {
 
     private static final String EMAIL = "email";
     private static final String PASSWORD = "password";
     private static final String USERNAME = "username";
     private static final String CONNECTION = "connection";
-    private static final String KEY_USER_METADATA = "user_metadata";
 
     @Test
-    public void shouldSetAllValues() throws Exception {
+    public void shouldSetAllValues() {
         DatabaseSignUpEvent event = new DatabaseSignUpEvent(EMAIL, PASSWORD, USERNAME);
 
         assertThat(event.getEmail(), is(equalTo(EMAIL)));
@@ -68,7 +69,7 @@ public class DatabaseSignUpEventTest {
     }
 
     @Test
-    public void shouldSetNullUsername() throws Exception {
+    public void shouldSetNullUsername() {
         DatabaseSignUpEvent event = new DatabaseSignUpEvent(EMAIL, PASSWORD, null);
 
         assertThat(event.getEmail(), is(equalTo(EMAIL)));
@@ -77,7 +78,7 @@ public class DatabaseSignUpEventTest {
     }
 
     @Test
-    public void shouldGetSignUpRequestWithUsername() throws Exception {
+    public void shouldGetSignUpRequestWithUsername() {
         AuthenticationAPIClient client = mock(AuthenticationAPIClient.class);
 
         DatabaseSignUpEvent event = new DatabaseSignUpEvent(EMAIL, PASSWORD, USERNAME);
@@ -86,7 +87,7 @@ public class DatabaseSignUpEventTest {
     }
 
     @Test
-    public void shouldGetSignUpRequestWithoutUsername() throws Exception {
+    public void shouldGetSignUpRequestWithoutUsername() {
         AuthenticationAPIClient client = mock(AuthenticationAPIClient.class);
 
         DatabaseSignUpEvent event = new DatabaseSignUpEvent(EMAIL, PASSWORD, null);
@@ -95,7 +96,7 @@ public class DatabaseSignUpEventTest {
     }
 
     @Test
-    public void shouldGetSignUpRequestWithUserMetadata() throws Exception {
+    public void shouldGetSignUpRequestWithUserMetadata() {
         AuthenticationAPIClient client = mock(AuthenticationAPIClient.class);
         final Map<String, String> metadata = createMetadata();
         ArgumentCaptor<Map> mapCaptor = ArgumentCaptor.forClass(Map.class);
@@ -106,7 +107,8 @@ public class DatabaseSignUpEventTest {
         event.setExtraFields(metadata);
         event.getSignUpRequest(client, CONNECTION);
         Mockito.verify(requestMock).addSignUpParameters(mapCaptor.capture());
-        assertValidMetadata(mapCaptor.getValue());
+        Map<String, String> metadataMap = (Map<String, String>) mapCaptor.getValue().get("user_metadata");
+        assertValidMetadata(metadataMap);
 
         SignUpRequest usernameRequestMock = mock(SignUpRequest.class);
         Mockito.when(client.signUp(EMAIL, PASSWORD, USERNAME, CONNECTION)).thenReturn(usernameRequestMock);
@@ -114,11 +116,51 @@ public class DatabaseSignUpEventTest {
         usernameEvent.setExtraFields(metadata);
         usernameEvent.getSignUpRequest(client, CONNECTION);
         Mockito.verify(usernameRequestMock).addSignUpParameters(mapCaptor.capture());
-        assertValidMetadata(mapCaptor.getValue());
+        metadataMap = (Map<String, String>) mapCaptor.getValue().get("user_metadata");
+        assertValidMetadata(metadataMap);
     }
 
     @Test
-    public void shouldGetCreateUserRequestWithUsername() throws Exception {
+    public void shouldGetSignUpRequestWithRootProfileAttributes() throws Exception {
+        AuthenticationAPIClient client = mock(AuthenticationAPIClient.class);
+        final Map<String, Object> attrs = createRootProfileAttributes();
+        ArgumentCaptor<Map> mapCaptor = ArgumentCaptor.forClass(Map.class);
+
+        SignUpRequest requestMock = mock(SignUpRequest.class);
+        Mockito.when(client.signUp(EMAIL, PASSWORD, CONNECTION)).thenReturn(requestMock);
+        DatabaseSignUpEvent event = new DatabaseSignUpEvent(EMAIL, PASSWORD, null);
+        event.setRootAttributes(attrs);
+        event.getSignUpRequest(client, CONNECTION);
+        Mockito.verify(requestMock).addSignUpParameters(mapCaptor.capture());
+        assertValidRootProfileAttributes(mapCaptor.getValue());
+
+        SignUpRequest usernameRequestMock = mock(SignUpRequest.class);
+        Mockito.when(client.signUp(EMAIL, PASSWORD, USERNAME, CONNECTION)).thenReturn(usernameRequestMock);
+        DatabaseSignUpEvent usernameEvent = new DatabaseSignUpEvent(EMAIL, PASSWORD, USERNAME);
+        usernameEvent.setRootAttributes(attrs);
+        usernameEvent.getSignUpRequest(client, CONNECTION);
+        Mockito.verify(usernameRequestMock).addSignUpParameters(mapCaptor.capture());
+        assertValidRootProfileAttributes(mapCaptor.getValue());
+    }
+
+    @Test
+    public void shouldGetCreateUserRequestWithoutRootProfileAttributes() throws Exception {
+        AuthenticationAPIClient client = mock(AuthenticationAPIClient.class);
+        DatabaseSignUpEvent event = new DatabaseSignUpEvent(EMAIL, PASSWORD, USERNAME);
+
+        SignUpRequest signUpRequestMock = mock(SignUpRequest.class);
+        Mockito.when(client.signUp(EMAIL, PASSWORD, USERNAME, CONNECTION)).thenReturn(signUpRequestMock);
+        event.getSignUpRequest(client, CONNECTION);
+        Mockito.verify(signUpRequestMock, never()).addSignUpParameters(anyMap());
+
+        SignUpRequest createRequestMock = mock(SignUpRequest.class);
+        Mockito.when(client.signUp(EMAIL, PASSWORD, USERNAME, CONNECTION)).thenReturn(createRequestMock);
+        event.getCreateUserRequest(client, CONNECTION);
+        Mockito.verify(createRequestMock, never()).addSignUpParameters(anyMap());
+    }
+
+    @Test
+    public void shouldGetCreateUserRequestWithUsername() {
         AuthenticationAPIClient client = mock(AuthenticationAPIClient.class);
 
         DatabaseSignUpEvent event = new DatabaseSignUpEvent(EMAIL, PASSWORD, USERNAME);
@@ -127,7 +169,7 @@ public class DatabaseSignUpEventTest {
     }
 
     @Test
-    public void shouldGetCreateUserRequestWithoutUsername() throws Exception {
+    public void shouldGetCreateUserRequestWithoutUsername() {
         AuthenticationAPIClient client = mock(AuthenticationAPIClient.class);
 
         DatabaseSignUpEvent event = new DatabaseSignUpEvent(EMAIL, PASSWORD, null);
@@ -136,7 +178,7 @@ public class DatabaseSignUpEventTest {
     }
 
     @Test
-    public void shouldGetCreateUserRequestWithUserMetadata() throws Exception {
+    public void shouldGetCreateUserRequestWithUserMetadata() {
         AuthenticationAPIClient client = mock(AuthenticationAPIClient.class);
         final Map<String, String> metadata = createMetadata();
 
@@ -145,29 +187,72 @@ public class DatabaseSignUpEventTest {
         DatabaseSignUpEvent event = new DatabaseSignUpEvent(EMAIL, PASSWORD, null);
         event.setExtraFields(metadata);
         event.getCreateUserRequest(client, CONNECTION);
-        Mockito.verify(requestMock).addParameter(KEY_USER_METADATA, metadata);
+        ArgumentCaptor<Map> mapCaptor = ArgumentCaptor.forClass(Map.class);
+        Mockito.verify(requestMock).addParameters(mapCaptor.capture());
+        Map<String, String> metadataMap = (Map<String, String>) mapCaptor.getValue().get("user_metadata");
+        assertValidMetadata(metadataMap);
 
         DatabaseConnectionRequest<DatabaseUser, AuthenticationException> usernameRequestMock = mock(DatabaseConnectionRequest.class);
         Mockito.when(client.createUser(EMAIL, PASSWORD, USERNAME, CONNECTION)).thenReturn(usernameRequestMock);
         DatabaseSignUpEvent eventUsername = new DatabaseSignUpEvent(EMAIL, PASSWORD, USERNAME);
         eventUsername.setExtraFields(metadata);
         eventUsername.getCreateUserRequest(client, CONNECTION);
-        Mockito.verify(usernameRequestMock).addParameter(KEY_USER_METADATA, metadata);
+        Mockito.verify(usernameRequestMock).addParameters(mapCaptor.capture());
+        metadataMap = (Map<String, String>) mapCaptor.getValue().get("user_metadata");
+        assertValidMetadata(metadataMap);
+    }
+
+    @Test
+    public void shouldGetCreateUserRequestWithRootProfileAttributes() throws Exception {
+        AuthenticationAPIClient client = mock(AuthenticationAPIClient.class);
+        final Map<String, Object> attrs = createRootProfileAttributes();
+
+        DatabaseConnectionRequest<DatabaseUser, AuthenticationException> requestMock = mock(DatabaseConnectionRequest.class);
+        Mockito.when(client.createUser(EMAIL, PASSWORD, CONNECTION)).thenReturn(requestMock);
+        DatabaseSignUpEvent event = new DatabaseSignUpEvent(EMAIL, PASSWORD, null);
+        event.setRootAttributes(attrs);
+        event.getCreateUserRequest(client, CONNECTION);
+        ArgumentCaptor<Map> mapCaptor = ArgumentCaptor.forClass(Map.class);
+        Mockito.verify(requestMock).addParameters(mapCaptor.capture());
+        assertValidRootProfileAttributes(mapCaptor.getValue());
+
+        DatabaseConnectionRequest<DatabaseUser, AuthenticationException> usernameRequestMock = mock(DatabaseConnectionRequest.class);
+        Mockito.when(client.createUser(EMAIL, PASSWORD, USERNAME, CONNECTION)).thenReturn(usernameRequestMock);
+        DatabaseSignUpEvent eventUsername = new DatabaseSignUpEvent(EMAIL, PASSWORD, USERNAME);
+        eventUsername.setRootAttributes(attrs);
+        eventUsername.getCreateUserRequest(client, CONNECTION);
+        Mockito.verify(usernameRequestMock).addParameters(mapCaptor.capture());
+        assertValidRootProfileAttributes(mapCaptor.getValue());
+    }
+
+    private Map<String, Object> createRootProfileAttributes() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("name", "Nicholas");
+        map.put("nickname", "Nick");
+        map.put("lastname", "Fury");
+        map.put("user_metadata", createMetadata());
+        return map;
     }
 
     private Map<String, String> createMetadata() {
         Map<String, String> map = new HashMap<>();
-        map.put("key", "value");
-        map.put("abc", "123");
+        map.put("country", "Argentina");
+        map.put("preferred_color", "blue");
         return map;
     }
 
-    private void assertValidMetadata(Map<String, Object> map) {
+    private void assertValidRootProfileAttributes(Map<String, Object> map) {
         assertThat(map, is(notNullValue()));
-        assertThat(map, IsMapContaining.hasKey("user_metadata"));
-        Map<String, String> resultMetadata = (Map<String, String>) map.get("user_metadata");
-        assertThat(resultMetadata, IsMapContaining.hasEntry("key", "value"));
-        assertThat(resultMetadata, IsMapContaining.hasEntry("abc", "123"));
+        assertThat(map, IsMapContaining.hasEntry("name", (Object) "Nicholas"));
+        assertThat(map, IsMapContaining.hasEntry("nickname", (Object) "Nick"));
+        assertThat(map, IsMapContaining.hasEntry("lastname", (Object) "Fury"));
+        assertThat(map, IsMapContaining.hasEntry("user_metadata", (Object) createMetadata()));
+    }
+
+    private void assertValidMetadata(Map<String, String> map) {
+        assertThat(map, is(notNullValue()));
+        assertThat(map, IsMapContaining.hasEntry("country", "Argentina"));
+        assertThat(map, IsMapContaining.hasEntry("preferred_color", "blue"));
     }
 
 }

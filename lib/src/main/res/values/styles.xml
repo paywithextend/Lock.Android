@@ -248,6 +248,7 @@
         <item name="android:singleLine">true</item>
         <item name="android:maxLines">1</item>
         <item name="android:imeOptions">actionDone</item>
+        <item name="android:inputType">textAutoCorrect</item>
     </style>
 
     <style name="Lock.Theme.Widget.CountryCodeSelector" parent="Lock.Theme.Widget.Field">
@@ -282,11 +283,6 @@
 
     <style name="Lock.Theme.Widget.SocialButton">
         <item name="android:layout_height">wrap_content</item>
-    </style>
-
-    <style name="Lock.Theme.Widget.SocialButton.Small" parent="Lock.Theme.Widget">
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_width">wrap_content</item>
     </style>
 
     <style name="Lock.Theme.Widget.SubmitButton">

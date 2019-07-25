@@ -24,9 +24,10 @@
 
 package com.auth0.android.lock.views;
 
+import android.annotation.SuppressLint;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.view.KeyEvent;
-import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.TextView;
 
@@ -34,26 +35,29 @@ import com.auth0.android.lock.R;
 import com.auth0.android.lock.events.DatabaseLoginEvent;
 import com.auth0.android.lock.views.interfaces.LockWidget;
 
+@SuppressLint("ViewConstructor")
 public class MFACodeFormView extends FormView implements TextView.OnEditorActionListener {
 
     private final String usernameOrEmail;
     private final String password;
+    private final String mfaToken;
 
     private LockWidget lockWidget;
     private ValidatedInputView codeInput;
 
 
-    public MFACodeFormView(LockWidget lockWidget, String usernameOrEmail, String password) {
+    public MFACodeFormView(@NonNull LockWidget lockWidget, @Nullable String usernameOrEmail, @Nullable String password, @Nullable String mfaToken) {
         super(lockWidget.getContext());
         this.lockWidget = lockWidget;
         this.usernameOrEmail = usernameOrEmail;
         this.password = password;
+        this.mfaToken = mfaToken;
         init();
     }
 
     private void init() {
         inflate(getContext(), R.layout.com_auth0_lock_mfa_input_code_form_view, this);
-        codeInput = (ValidatedInputView) findViewById(R.id.com_auth0_lock_input_code);
+        codeInput = findViewById(R.id.com_auth0_lock_input_code);
         codeInput.setHint(R.string.com_auth0_lock_hint_mfa_code);
         codeInput.setOnEditorActionListener(this);
     }
@@ -62,6 +66,7 @@ public class MFACodeFormView extends FormView implements TextView.OnEditorAction
     public Object getActionEvent() {
         DatabaseLoginEvent event = new DatabaseLoginEvent(usernameOrEmail, password);
         event.setVerificationCode(getInputText());
+        event.setMFAToken(mfaToken);
         return event;
     }
 

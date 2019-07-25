@@ -24,6 +24,7 @@
 
 package com.auth0.android.lock.internal.configuration;
 
+import android.annotation.SuppressLint;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcel;
@@ -36,7 +37,6 @@ import android.util.Patterns;
 import com.auth0.android.Auth0;
 import com.auth0.android.authentication.AuthenticationAPIClient;
 import com.auth0.android.lock.Auth0Parcelable;
-import com.auth0.android.lock.AuthButtonSize;
 import com.auth0.android.lock.InitialScreen;
 import com.auth0.android.lock.UsernameStyle;
 import com.auth0.android.lock.utils.CustomField;
@@ -64,7 +64,6 @@ public class Options implements Parcelable {
     private boolean useBrowser;
     private boolean usePKCE;
     private boolean closable;
-    private int authButtonSize;
     private int usernameStyle;
     private boolean useCodePasswordless;
     private boolean allowLogIn;
@@ -73,6 +72,7 @@ public class Options implements Parcelable {
     private boolean allowShowPassword;
     private boolean loginAfterSignUp;
     private boolean mustAcceptTerms;
+    private boolean showTerms;
     private boolean useLabeledSubmitButton;
     private boolean hideMainScreenTitle;
     private boolean rememberLastPasswordlessLogin;
@@ -101,6 +101,7 @@ public class Options implements Parcelable {
         allowForgotPassword = true;
         allowShowPassword = true;
         loginAfterSignUp = true;
+        showTerms = true;
         useCodePasswordless = true;
         usePKCE = true;
         useLabeledSubmitButton = true;
@@ -123,6 +124,7 @@ public class Options implements Parcelable {
         allowShowPassword = in.readByte() != WITHOUT_DATA;
         loginAfterSignUp = in.readByte() != WITHOUT_DATA;
         mustAcceptTerms = in.readByte() != WITHOUT_DATA;
+        showTerms = in.readByte() != WITHOUT_DATA;
         useCodePasswordless = in.readByte() != WITHOUT_DATA;
         useLabeledSubmitButton = in.readByte() != WITHOUT_DATA;
         hideMainScreenTitle = in.readByte() != WITHOUT_DATA;
@@ -130,7 +132,6 @@ public class Options implements Parcelable {
         defaultDatabaseConnection = in.readString();
         usernameStyle = in.readInt();
         initialScreen = in.readInt();
-        authButtonSize = in.readInt();
         theme = in.readParcelable(Theme.class.getClassLoader());
         privacyURL = in.readString();
         termsURL = in.readString();
@@ -152,6 +153,7 @@ public class Options implements Parcelable {
         }
         if (in.readByte() == HAS_DATA) {
             // FIXME this is something to improve
+            @SuppressLint("ParcelClassLoader")
             Bundle mapBundle = in.readBundle();
             authenticationParameters = (HashMap<String, Object>) mapBundle.getSerializable(KEY_AUTHENTICATION_PARAMETERS);
         } else {
@@ -171,6 +173,7 @@ public class Options implements Parcelable {
         }
         if (in.readByte() == HAS_DATA) {
             // FIXME this is something to improve
+            @SuppressLint("ParcelClassLoader")
             Bundle mapBundle = in.readBundle();
             connectionsScope = (HashMap<String, String>) mapBundle.getSerializable(KEY_CONNECTIONS_SCOPE);
         } else {
@@ -201,6 +204,7 @@ public class Options implements Parcelable {
         dest.writeByte((byte) (allowShowPassword ? HAS_DATA : WITHOUT_DATA));
         dest.writeByte((byte) (loginAfterSignUp ? HAS_DATA : WITHOUT_DATA));
         dest.writeByte((byte) (mustAcceptTerms ? HAS_DATA : WITHOUT_DATA));
+        dest.writeByte((byte) (showTerms ? HAS_DATA : WITHOUT_DATA));
         dest.writeByte((byte) (useCodePasswordless ? HAS_DATA : WITHOUT_DATA));
         dest.writeByte((byte) (useLabeledSubmitButton ? HAS_DATA : WITHOUT_DATA));
         dest.writeByte((byte) (hideMainScreenTitle ? HAS_DATA : WITHOUT_DATA));
@@ -208,7 +212,6 @@ public class Options implements Parcelable {
         dest.writeString(defaultDatabaseConnection);
         dest.writeInt(usernameStyle);
         dest.writeInt(initialScreen);
-        dest.writeInt(authButtonSize);
         dest.writeParcelable(theme, flags);
         dest.writeString(privacyURL);
         dest.writeString(termsURL);
@@ -329,15 +332,6 @@ public class Options implements Parcelable {
 
     public void setAllowLogIn(boolean allowLogIn) {
         this.allowLogIn = allowLogIn;
-    }
-
-    public void setAuthButtonSize(@AuthButtonSize int authButtonSize) {
-        this.authButtonSize = authButtonSize;
-    }
-
-    @AuthButtonSize
-    public int authButtonSize() {
-        return authButtonSize;
     }
 
     public boolean allowLogIn() {
@@ -484,6 +478,14 @@ public class Options implements Parcelable {
 
     public boolean mustAcceptTerms() {
         return mustAcceptTerms;
+    }
+
+    public void setShowTerms(boolean showTerms) {
+        this.showTerms = showTerms;
+    }
+
+    public boolean showTerms() {
+        return showTerms;
     }
 
     public void withAuthStyle(@NonNull String connectionName, @StyleRes int style) {

@@ -24,9 +24,6 @@
 
 package com.auth0.android.lock.internal.configuration;
 
-import android.util.Log;
-
-import com.auth0.android.lock.AuthButtonSize;
 import com.auth0.android.lock.InitialScreen;
 import com.auth0.android.lock.R;
 import com.auth0.android.lock.UsernameStyle;
@@ -66,7 +63,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(constants = com.auth0.android.lock.BuildConfig.class, sdk = 21, manifest = Config.NONE)
+@Config(sdk = 21)
 public class ConfigurationTest extends GsonBaseTest {
 
     private static final String RESTRICTIVE_DATABASE = "RestrictiveDatabase";
@@ -93,7 +90,7 @@ public class ConfigurationTest extends GsonBaseTest {
     }
 
     @Test
-    public void shouldKeepApplicationDefaultsIfOptionsAreNotModified() throws Exception {
+    public void shouldKeepApplicationDefaultsIfOptionsAreNotModified() {
         configuration = new Configuration(connections, options);
         assertThat(configuration.isUsernameRequired(), is(false));
         assertThat(configuration.allowLogIn(), is(true));
@@ -103,23 +100,24 @@ public class ConfigurationTest extends GsonBaseTest {
         assertThat(configuration.loginAfterSignUp(), is(true));
         assertThat(configuration.getUsernameStyle(), is(equalTo(UsernameStyle.DEFAULT)));
         assertThat(configuration.getInitialScreen(), is(equalTo(InitialScreen.LOG_IN)));
-        assertThat(configuration.getSocialButtonStyle(), is(equalTo(AuthButtonSize.UNSPECIFIED)));
         assertThat(configuration.hasExtraFields(), is(false));
-        assertThat(configuration.getPasswordPolicy(), is(PasswordStrength.NONE));
+        assertThat(configuration.getPasswordComplexity(), is(notNullValue()));
+        assertThat(configuration.getPasswordComplexity().getPasswordPolicy(), is(PasswordStrength.NONE));
         assertThat(configuration.mustAcceptTerms(), is(false));
+        assertThat(configuration.showTerms(), is(true));
         assertThat(configuration.useLabeledSubmitButton(), is(true));
         assertThat(configuration.hideMainScreenTitle(), is(false));
         assertThat(configuration.usePasswordlessAutoSubmit(), is(false));
     }
 
     @Test
-    public void shouldGetValidStyleForNotOverriddenStrategy() throws Exception {
+    public void shouldGetValidStyleForNotOverriddenStrategy() {
         configuration = new Configuration(connections, options);
         assertThat(configuration.authStyleForConnection("facebook", "facebook-prod"), Matchers.is(R.style.Lock_Theme_AuthStyle_Facebook));
     }
 
     @Test
-    public void shouldGetStyleForOverriddenStrategy() throws Exception {
+    public void shouldGetStyleForOverriddenStrategy() {
         //noinspection ResourceType
         options.withAuthStyle("facebook-prod", 123456);
         configuration = new Configuration(connections, options);
@@ -127,7 +125,7 @@ public class ConfigurationTest extends GsonBaseTest {
     }
 
     @Test
-    public void shouldMergeApplicationWithOptionsIfDefaultDatabaseExists() throws Exception {
+    public void shouldMergeApplicationWithOptionsIfDefaultDatabaseExists() {
         options.setConnections(Collections.singletonList(USERNAME_PASSWORD_AUTHENTICATION));
         options.setAllowLogIn(false);
         options.setAllowSignUp(false);
@@ -135,7 +133,6 @@ public class ConfigurationTest extends GsonBaseTest {
         options.setAllowShowPassword(false);
         options.setLoginAfterSignUp(false);
         options.setUsernameStyle(UsernameStyle.USERNAME);
-        options.setAuthButtonSize(AuthButtonSize.BIG);
         configuration = new Configuration(connections, options);
         assertThat(configuration.isUsernameRequired(), is(false));
         assertThat(configuration.allowLogIn(), is(false));
@@ -144,12 +141,11 @@ public class ConfigurationTest extends GsonBaseTest {
         assertThat(configuration.allowShowPassword(), is(false));
         assertThat(configuration.loginAfterSignUp(), is(false));
         assertThat(configuration.getUsernameStyle(), is(equalTo(UsernameStyle.USERNAME)));
-        assertThat(configuration.getSocialButtonStyle(), is(equalTo(AuthButtonSize.BIG)));
         assertThat(configuration.hasExtraFields(), is(false));
     }
 
     @Test
-    public void shouldNotMergeApplicationWithOptionsIfApplicationIsRestrictive() throws Exception {
+    public void shouldNotMergeApplicationWithOptionsIfApplicationIsRestrictive() {
         options.setConnections(Collections.singletonList(RESTRICTIVE_DATABASE));
         options.setAllowSignUp(true);
         options.setAllowForgotPassword(true);
@@ -159,37 +155,37 @@ public class ConfigurationTest extends GsonBaseTest {
     }
 
     @Test
-    public void shouldNotUseClassicLockIfNoConnectionsAreAvailable() throws Exception {
+    public void shouldNotUseClassicLockIfNoConnectionsAreAvailable() {
         configuration = filteredConfigBy("");
         assertThat(configuration.hasClassicConnections(), is(false));
     }
 
     @Test
-    public void shouldUseClassicLockWithEnterpriseConnections() throws Exception {
+    public void shouldUseClassicLockWithEnterpriseConnections() {
         configuration = filteredConfigBy(MY_AD);
         assertThat(configuration.hasClassicConnections(), is(true));
     }
 
     @Test
-    public void shouldUseClassicLockWithSocialConnections() throws Exception {
+    public void shouldUseClassicLockWithSocialConnections() {
         configuration = filteredConfigBy(TWITTER);
         assertThat(configuration.hasClassicConnections(), is(true));
     }
 
     @Test
-    public void shouldUseClassicLockWithDatabaseConnections() throws Exception {
+    public void shouldUseClassicLockWithDatabaseConnections() {
         configuration = filteredConfigBy(RESTRICTIVE_DATABASE);
         assertThat(configuration.hasClassicConnections(), is(true));
     }
 
     @Test
-    public void shouldNotUsePasswordlessIfNoConnectionsAreAvailable() throws Exception {
+    public void shouldNotUsePasswordlessIfNoConnectionsAreAvailable() {
         configuration = filteredConfigBy("");
         assertThat(configuration.hasPasswordlessConnections(), is(false));
     }
 
     @Test
-    public void shouldIgnoreAllowedScreenSettingsIfDatabaseConnectionsAreAvailable() throws Exception {
+    public void shouldIgnoreAllowedScreenSettingsIfDatabaseConnectionsAreAvailable() {
         options.setAllowLogIn(false);
         options.setAllowSignUp(false);
         options.setAllowForgotPassword(false);
@@ -198,19 +194,19 @@ public class ConfigurationTest extends GsonBaseTest {
     }
 
     @Test
-    public void shouldUsePasswordlessLockWithSocialConnections() throws Exception {
+    public void shouldUsePasswordlessLockWithSocialConnections() {
         configuration = filteredConfigBy(TWITTER);
         assertThat(configuration.hasPasswordlessConnections(), is(true));
     }
 
     @Test
-    public void shouldUsePasswordlessLockWithPasswordlessConnections() throws Exception {
+    public void shouldUsePasswordlessLockWithPasswordlessConnections() {
         configuration = filteredConfigBy(EMAIL);
         assertThat(configuration.hasPasswordlessConnections(), is(true));
     }
 
     @Test
-    public void shouldPasswordlessLockNotBeAffectedByClassicLockScreenFlags() throws Exception {
+    public void shouldPasswordlessLockNotBeAffectedByClassicLockScreenFlags() {
         options.setAllowLogIn(false);
         options.setAllowSignUp(false);
         options.setAllowForgotPassword(false);
@@ -219,7 +215,7 @@ public class ConfigurationTest extends GsonBaseTest {
     }
 
     @Test
-    public void shouldSetExtraSignUpFields() throws Exception {
+    public void shouldSetExtraSignUpFields() {
         options.setCustomFields(createCustomFields());
         configuration = new Configuration(connections, options);
 
@@ -228,7 +224,7 @@ public class ConfigurationTest extends GsonBaseTest {
     }
 
     @Test
-    public void shouldSetInitialScreenWhenDatabaseConnectionAvailable() throws Exception {
+    public void shouldSetInitialScreenWhenDatabaseConnectionAvailable() {
         options.setConnections(Collections.singletonList(USERNAME_PASSWORD_AUTHENTICATION));
 
         options.setInitialScreen(InitialScreen.SIGN_UP);
@@ -245,7 +241,7 @@ public class ConfigurationTest extends GsonBaseTest {
     }
 
     @Test
-    public void shouldNotChangeInitialScreenWhenNoDatabaseConnectionAvailable() throws Exception {
+    public void shouldNotChangeInitialScreenWhenNoDatabaseConnectionAvailable() {
         options.setConnections(Collections.singletonList(""));
 
         //InitialScreen.LOG_IN is the default InitialScreen.
@@ -259,7 +255,7 @@ public class ConfigurationTest extends GsonBaseTest {
     }
 
     @Test
-    public void shouldPreferPasswordlessEmailOverSMSWhenBothAvailable() throws Exception {
+    public void shouldPreferPasswordlessEmailOverSMSWhenBothAvailable() {
         options.setUseCodePasswordless(true);
         options.setConnections(Arrays.asList("sms", "email"));
         configuration = new Configuration(connections, options);
@@ -274,37 +270,37 @@ public class ConfigurationTest extends GsonBaseTest {
     }
 
     @Test
-    public void shouldSetCorrectPasswordlessTypeWhenUsingEmail() throws Exception {
+    public void shouldSetCorrectPasswordlessTypeWhenUsingEmail() {
         options.setUseCodePasswordless(true);
-        options.setConnections(Arrays.asList("email"));
+        options.setConnections(Collections.singletonList("email"));
         configuration = new Configuration(connections, options);
 
         assertThat(configuration.getPasswordlessMode(), is(PasswordlessMode.EMAIL_CODE));
 
         options.setUseCodePasswordless(false);
-        options.setConnections(Arrays.asList("email"));
+        options.setConnections(Collections.singletonList("email"));
         configuration = new Configuration(connections, options);
 
         assertThat(configuration.getPasswordlessMode(), is(PasswordlessMode.EMAIL_LINK));
     }
 
     @Test
-    public void shouldSetCorrectPasswordlessTypeWhenUsingSMS() throws Exception {
+    public void shouldSetCorrectPasswordlessTypeWhenUsingSMS() {
         options.setUseCodePasswordless(true);
-        options.setConnections(Arrays.asList("sms"));
+        options.setConnections(Collections.singletonList("sms"));
         configuration = new Configuration(connections, options);
 
         assertThat(configuration.getPasswordlessMode(), is(PasswordlessMode.SMS_CODE));
 
         options.setUseCodePasswordless(false);
-        options.setConnections(Arrays.asList("sms"));
+        options.setConnections(Collections.singletonList("sms"));
         configuration = new Configuration(connections, options);
 
         assertThat(configuration.getPasswordlessMode(), is(PasswordlessMode.SMS_LINK));
     }
 
     @Test
-    public void shouldNotHavePasswordlessModeWithoutConnections() throws Exception {
+    public void shouldNotHavePasswordlessModeWithoutConnections() {
         options.setUseCodePasswordless(true);
         options.setConnections(Collections.singletonList("facebook"));
         configuration = new Configuration(connections, options);
@@ -313,7 +309,7 @@ public class ConfigurationTest extends GsonBaseTest {
     }
 
     @Test
-    public void shouldDefaultToCodePasswordlessWhenTypeMissingFromOptions() throws Exception {
+    public void shouldDefaultToCodePasswordlessWhenTypeMissingFromOptions() {
         options.setConnections(Collections.singletonList("sms"));
         configuration = new Configuration(connections, options);
 
@@ -321,13 +317,13 @@ public class ConfigurationTest extends GsonBaseTest {
     }
 
     @Test
-    public void shouldNotFilterDefaultDBConnection() throws Exception {
+    public void shouldNotFilterDefaultDBConnection() {
         configuration = unfilteredConfig();
         assertThat(configuration.getDatabaseConnection(), hasName(USERNAME_PASSWORD_AUTHENTICATION));
     }
 
     @Test
-    public void shouldHandleNoDBConnections() throws Exception {
+    public void shouldHandleNoDBConnections() {
         options.useDatabaseConnection(null);
         configuration = new Configuration(new ArrayList<Connection>(), options);
         final DatabaseConnection connection = configuration.getDatabaseConnection();
@@ -335,19 +331,19 @@ public class ConfigurationTest extends GsonBaseTest {
     }
 
     @Test
-    public void shouldFilterDBConnection() throws Exception {
+    public void shouldFilterDBConnection() {
         configuration = filteredConfigBy(CUSTOM_DATABASE);
         assertThat(configuration.getDatabaseConnection(), hasName(CUSTOM_DATABASE));
     }
 
     @Test
-    public void shouldReturnNullDBConnectionWhenNoneMatch() throws Exception {
+    public void shouldReturnNullDBConnectionWhenNoneMatch() {
         configuration = filteredConfigBy(UNKNOWN_CONNECTION);
         assertThat(configuration.getDatabaseConnection(), nullValue());
     }
 
     @Test
-    public void shouldReturnSpecifiedDBConnectionWhenMoreThanOneDBConnectionIsAvailable() throws Exception {
+    public void shouldReturnSpecifiedDBConnectionWhenMoreThanOneDBConnectionIsAvailable() {
         options.setConnections(Arrays.asList(CUSTOM_DATABASE, USERNAME_PASSWORD_AUTHENTICATION, RESTRICTIVE_DATABASE, UNKNOWN_CONNECTION));
         options.useDatabaseConnection(RESTRICTIVE_DATABASE);
         configuration = new Configuration(connections, options);
@@ -355,7 +351,7 @@ public class ConfigurationTest extends GsonBaseTest {
     }
 
     @Test
-    public void shouldReturnSpecifiedDBConnectionIfAvailable() throws Exception {
+    public void shouldReturnSpecifiedDBConnectionIfAvailable() {
         options.setConnections(null);
 
         options.useDatabaseConnection(CUSTOM_DATABASE);
@@ -364,7 +360,7 @@ public class ConfigurationTest extends GsonBaseTest {
     }
 
     @Test
-    public void shouldIgnoreSpecifiedDBConnectionIfNotAvailable() throws Exception {
+    public void shouldIgnoreSpecifiedDBConnectionIfNotAvailable() {
         options.setConnections(null);
 
         options.useDatabaseConnection("non-existing-db-connection");
@@ -373,7 +369,7 @@ public class ConfigurationTest extends GsonBaseTest {
     }
 
     @Test
-    public void shouldIgnoreSpecifiedDBConnectionIfFiltered() throws Exception {
+    public void shouldIgnoreSpecifiedDBConnectionIfFiltered() {
         options.setConnections(Collections.singletonList(USERNAME_PASSWORD_AUTHENTICATION));
 
         options.useDatabaseConnection("non-existing-db-connection");
@@ -382,7 +378,7 @@ public class ConfigurationTest extends GsonBaseTest {
     }
 
     @Test
-    public void shouldReturnUnfilteredPasswordlessConnections() throws Exception {
+    public void shouldReturnUnfilteredPasswordlessConnections() {
         configuration = unfilteredConfig();
         List<PasswordlessConnection> connections = configuration.getPasswordlessConnections();
         assertThat(connections, is(notNullValue()));
@@ -391,7 +387,7 @@ public class ConfigurationTest extends GsonBaseTest {
     }
 
     @Test
-    public void shouldReturnFilteredPasswordlessConnections() throws Exception {
+    public void shouldReturnFilteredPasswordlessConnections() {
         configuration = filteredConfigBy(CUSTOM_PASSWORDLESS_CONNECTION);
         PasswordlessConnection connection = configuration.getPasswordlessConnection();
         assertThat(connection, is(notNullValue()));
@@ -399,7 +395,7 @@ public class ConfigurationTest extends GsonBaseTest {
     }
 
     @Test
-    public void shouldPreferEmailPasswordlessConnection() throws Exception {
+    public void shouldPreferEmailPasswordlessConnection() {
         configuration = unfilteredConfig();
         PasswordlessConnection defaultConnection = configuration.getPasswordlessConnection();
         assertThat(defaultConnection, is(notNullValue()));
@@ -407,14 +403,14 @@ public class ConfigurationTest extends GsonBaseTest {
     }
 
     @Test
-    public void shouldReturnEmptyPasswordlessConnectionIfNoneMatch() throws Exception {
+    public void shouldReturnEmptyPasswordlessConnectionIfNoneMatch() {
         configuration = filteredConfigBy("facebook");
         PasswordlessConnection connection = configuration.getPasswordlessConnection();
         assertThat(connection, is(nullValue()));
     }
 
     @Test
-    public void shouldIgnoreStrategyNameAndReturnFilteredConnections() throws Exception {
+    public void shouldIgnoreStrategyNameAndReturnFilteredConnections() {
         configuration = filteredConfigBy("twitter", "twitter-dev");
         final List<OAuthConnection> strategies = configuration.getSocialConnections();
         assertThat(strategies, containsInAnyOrder(hasConnection("twitter", "twitter"), hasConnection("twitter", "twitter-dev")));
@@ -422,7 +418,7 @@ public class ConfigurationTest extends GsonBaseTest {
     }
 
     @Test
-    public void shouldNotReturnFilteredSocialStrategiesWithoutConnections() throws Exception {
+    public void shouldNotReturnFilteredSocialStrategiesWithoutConnections() {
         configuration = filteredConfigBy("facebook", "linkedin");
         final List<OAuthConnection> connections = configuration.getSocialConnections();
         assertThat(connections, hasItem(hasStrategy("facebook")));
@@ -430,7 +426,7 @@ public class ConfigurationTest extends GsonBaseTest {
     }
 
     @Test
-    public void shouldReturnUnfilteredSocialConnections() throws Exception {
+    public void shouldReturnUnfilteredSocialConnections() {
         configuration = unfilteredConfig();
         final List<OAuthConnection> connections = configuration.getSocialConnections();
         assertThat(connections, containsInAnyOrder(hasConnection("facebook", "facebook"),
@@ -439,46 +435,91 @@ public class ConfigurationTest extends GsonBaseTest {
     }
 
     @Test
-    public void shouldReturnFilteredSocialConnections() throws Exception {
+    public void shouldReturnFilteredSocialConnections() {
         configuration = filteredConfigBy("facebook", "instagram");
         assertThat(configuration.getSocialConnections(), containsInAnyOrder(hasConnection("facebook", "facebook"),
                 hasConnection("instagram", "instagram")));
     }
 
     @Test
-    public void shouldReturnEmptySocialConnectionsIfNoneMatch() throws Exception {
+    public void shouldReturnEmptySocialConnectionsIfNoneMatch() {
         configuration = filteredConfigBy("yammer", "yahoo");
         assertThat(configuration.getSocialConnections(), emptyIterable());
     }
 
     @Test
-    public void shouldReturnUnfilteredEnterpriseConnections() throws Exception {
+    public void shouldReturnUnfilteredEnterpriseConnections() {
         configuration = unfilteredConfig();
-        assertThat(configuration.getEnterpriseConnections(), containsInAnyOrder(hasConnection("ad", "MyAD"),
-                hasConnection("ad", "mySecondAD"), hasConnection("google-apps", "auth0.com")));
+        assertThat(configuration.getEnterpriseConnections(), containsInAnyOrder(
+                hasConnection("ad", "MyAD"),
+                hasConnection("ad", "mySecondAD"),
+                hasConnection("google-apps", "auth0.com")
+        ));
     }
 
     @Test
-    public void shouldReturnFilteredEnterpriseConnections() throws Exception {
+    public void shouldAllowEnterpriseActiveFlowByDefault() {
+        configuration = unfilteredConfig();
+        for (OAuthConnection c : configuration.getEnterpriseConnections()) {
+            if (Arrays.asList("ad", "waad", "adfs").contains(c.getStrategy())) {
+                assertThat(c.isActiveFlowEnabled(), is(true));
+            } else {
+                //Strategies not included above should not allow ActiveFlow
+                assertThat(c.isActiveFlowEnabled(), is(false));
+            }
+        }
+    }
+
+    @Test
+    public void shouldDisableEnterpriseActiveFlowOnGivenConnections() {
+        List<String> webAuthEnabledConnections = Collections.singletonList("MyAD");
+        options.setEnterpriseConnectionsUsingWebForm(webAuthEnabledConnections);
+        configuration = new Configuration(connections, options);
+
+        //Connections include 2 'ad' enterprise connections: "MyAD" and "mySecondAD"
+        //'MyAD' is tell above to use Web Authentication instead of its default behavior
+        for (OAuthConnection c : configuration.getEnterpriseConnections()) {
+            if (c.getName().equals("mySecondAD")) {
+                assertThat(c.isActiveFlowEnabled(), is(true));
+            } else if (c.getName().equals("MyAD")) {
+                assertThat(c.isActiveFlowEnabled(), is(false));
+            }
+        }
+    }
+
+    @Test
+    public void shouldNotFilterEnterpriseConnectionsByWebAuthEnabled() {
+        options.setConnections(Arrays.asList("auth0.com", "MyAD"));
+        options.setEnterpriseConnectionsUsingWebForm(Arrays.asList("mySecondAD", "MyAD"));
+        configuration = new Configuration(connections, options);
+
+        assertThat(configuration.getEnterpriseConnections(), containsInAnyOrder(
+                hasConnection("ad", "MyAD"),
+                hasConnection("google-apps", "auth0.com")
+        ));
+    }
+
+    @Test
+    public void shouldReturnFilteredEnterpriseConnections() {
         configuration = filteredConfigBy("auth0.com");
         assertThat(configuration.getEnterpriseConnections(), contains(hasConnection("google-apps", "auth0.com")));
     }
 
     @Test
-    public void shouldReturnEmptyEnterpriseConnectionsIfNoneMatch() throws Exception {
+    public void shouldReturnEmptyEnterpriseConnectionsIfNoneMatch() {
         configuration = filteredConfigBy("yandex");
         assertThat(configuration.getEnterpriseConnections(), emptyIterable());
     }
 
     @Test
-    public void shouldHaveDefaultPrivacyPolicyURL() throws Exception {
+    public void shouldHaveDefaultPrivacyPolicyURL() {
         configuration = unfilteredConfig();
         assertThat(configuration.getPrivacyURL(), is(notNullValue()));
         assertThat(configuration.getPrivacyURL(), is(equalTo("https://auth0.com/privacy")));
     }
 
     @Test
-    public void shouldHaveCustomPrivacyPolicyURL() throws Exception {
+    public void shouldHaveCustomPrivacyPolicyURL() {
         options.setPrivacyURL("https://google.com/privacy");
         configuration = new Configuration(connections, options);
         assertThat(configuration.getPrivacyURL(), is(notNullValue()));
@@ -486,14 +527,14 @@ public class ConfigurationTest extends GsonBaseTest {
     }
 
     @Test
-    public void shouldHaveDefaultTermsOfServiceURL() throws Exception {
+    public void shouldHaveDefaultTermsOfServiceURL() {
         configuration = unfilteredConfig();
         assertThat(configuration.getTermsURL(), is(notNullValue()));
         assertThat(configuration.getTermsURL(), is(equalTo("https://auth0.com/terms")));
     }
 
     @Test
-    public void shouldHaveCustomTermsOfServiceURL() throws Exception {
+    public void shouldHaveCustomTermsOfServiceURL() {
         options.setTermsURL("https://google.com/terms");
         configuration = new Configuration(connections, options);
         assertThat(configuration.getTermsURL(), is(notNullValue()));
@@ -501,13 +542,13 @@ public class ConfigurationTest extends GsonBaseTest {
     }
 
     @Test
-    public void shouldNotHaveDefaultSupportURL() throws Exception {
+    public void shouldNotHaveDefaultSupportURL() {
         configuration = unfilteredConfig();
         assertThat(configuration.getSupportURL(), is(nullValue()));
     }
 
     @Test
-    public void shouldHaveCustomSupportURL() throws Exception {
+    public void shouldHaveCustomSupportURL() {
         options.setSupportURL("https://google.com/support");
         configuration = new Configuration(connections, options);
         assertThat(configuration.getSupportURL(), is(notNullValue()));
@@ -515,35 +556,44 @@ public class ConfigurationTest extends GsonBaseTest {
     }
 
     @Test
-    public void shouldHaveMustAcceptTermsEnabled() throws Exception {
+    public void shouldHaveMustAcceptTermsEnabled() {
         options.setMustAcceptTerms(true);
         configuration = new Configuration(connections, options);
         assertThat(configuration.mustAcceptTerms(), is(true));
     }
 
     @Test
-    public void shouldNotUseLabeledSubmitButton() throws Exception {
+    public void shouldHaveShowTermsDisabled() {
+        options.setShowTerms(false);
+        configuration = new Configuration(connections, options);
+        assertThat(configuration.showTerms(), is(false));
+    }
+
+    @Test
+    public void shouldNotUseLabeledSubmitButton() {
         options.setUseLabeledSubmitButton(false);
         configuration = new Configuration(connections, options);
         assertThat(configuration.useLabeledSubmitButton(), is(false));
     }
 
     @Test
-    public void shouldGetPasswordPolicy() throws Exception {
+    public void shouldGetPasswordPolicy() {
         options.useDatabaseConnection("with-strength");
         configuration = new Configuration(connections, options);
-        assertThat(configuration.getPasswordPolicy(), is(PasswordStrength.EXCELLENT));
+        PasswordComplexity passwordComplexity = configuration.getPasswordComplexity();
+        assertThat(passwordComplexity, is(notNullValue()));
+        assertThat(passwordComplexity.getPasswordPolicy(), is(PasswordStrength.EXCELLENT));
     }
 
     @Test
-    public void shouldHideMainScreenTitle() throws Exception {
+    public void shouldHideMainScreenTitle() {
         options.setHideMainScreenTitle(true);
         configuration = new Configuration(connections, options);
         assertThat(configuration.hideMainScreenTitle(), is(true));
     }
 
     @Test
-    public void shouldUsePasswordlessAutoSubmit() throws Exception {
+    public void shouldUsePasswordlessAutoSubmit() {
         options.setRememberLastPasswordlessLogin(true);
         configuration = new Configuration(connections, options);
         assertThat(configuration.usePasswordlessAutoSubmit(), is(true));

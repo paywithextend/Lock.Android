@@ -7,6 +7,7 @@ import java.util.Map;
 
 import static com.auth0.android.lock.internal.configuration.ConnectionMatcher.hasType;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -14,7 +15,7 @@ import static org.junit.Assert.assertTrue;
 public class DatabaseConnectionTest {
 
     @Test
-    public void shouldRequireUsername() throws Exception {
+    public void shouldRequireUsername() {
         Map<String, Object> values = new HashMap<>();
         values.put("name", "Username-Password-Authentication");
         values.put("requires_username", true);
@@ -24,7 +25,7 @@ public class DatabaseConnectionTest {
     }
 
     @Test
-    public void shouldNotRequireUsername() throws Exception {
+    public void shouldNotRequireUsername() {
         Map<String, Object> values = new HashMap<>();
         values.put("name", "Username-Password-Authentication");
         values.put("requires_username", false);
@@ -34,7 +35,7 @@ public class DatabaseConnectionTest {
     }
 
     @Test
-    public void shouldShowSignup() throws Exception {
+    public void shouldShowSignup() {
         Map<String, Object> values = new HashMap<>();
         values.put("name", "Username-Password-Authentication");
         values.put("showSignup", true);
@@ -44,7 +45,7 @@ public class DatabaseConnectionTest {
     }
 
     @Test
-    public void shouldNotShowSignup() throws Exception {
+    public void shouldNotShowSignup() {
         Map<String, Object> values = new HashMap<>();
         values.put("name", "Username-Password-Authentication");
         values.put("showSignup", false);
@@ -54,7 +55,7 @@ public class DatabaseConnectionTest {
     }
 
     @Test
-    public void shouldShowForgot() throws Exception {
+    public void shouldShowForgot() {
         Map<String, Object> values = new HashMap<>();
         values.put("name", "Username-Password-Authentication");
         values.put("showForgot", true);
@@ -64,7 +65,7 @@ public class DatabaseConnectionTest {
     }
 
     @Test
-    public void shouldNotShowForgot() throws Exception {
+    public void shouldNotShowForgot() {
         Map<String, Object> values = new HashMap<>();
         values.put("name", "Username-Password-Authentication");
         values.put("showForgot", false);
@@ -74,56 +75,79 @@ public class DatabaseConnectionTest {
     }
 
     @Test
-    public void shouldGetExcellentPasswordPolicy() throws Exception {
+    public void shouldGetExcellentPasswordPolicy() {
         Map<String, Object> values = new HashMap<>();
         values.put("name", "Username-Password-Authentication");
         values.put("passwordPolicy", "excellent");
         DatabaseConnection connection = connectionFor(values);
-
-        assertThat(connection.getPasswordPolicy(), is(PasswordStrength.EXCELLENT));
+        PasswordComplexity passwordComplexity = connection.getPasswordComplexity();
+        assertThat(passwordComplexity.getPasswordPolicy(), is(PasswordStrength.EXCELLENT));
+        assertThat(passwordComplexity.getMinLengthOverride(), is(nullValue()));
     }
 
     @Test
-    public void shouldGetFairPasswordPolicy() throws Exception {
+    public void shouldGetFairPasswordPolicy() {
         Map<String, Object> values = new HashMap<>();
         values.put("name", "Username-Password-Authentication");
         values.put("passwordPolicy", "fair");
         DatabaseConnection connection = connectionFor(values);
 
-        assertThat(connection.getPasswordPolicy(), is(PasswordStrength.FAIR));
+        PasswordComplexity passwordComplexity = connection.getPasswordComplexity();
+        assertThat(passwordComplexity.getPasswordPolicy(), is(PasswordStrength.FAIR));
+        assertThat(passwordComplexity.getMinLengthOverride(), is(nullValue()));
     }
 
     @Test
-    public void shouldGetGoodPasswordPolicy() throws Exception {
+    public void shouldGetGoodPasswordPolicy() {
         Map<String, Object> values = new HashMap<>();
         values.put("name", "Username-Password-Authentication");
         values.put("passwordPolicy", "good");
         DatabaseConnection connection = connectionFor(values);
 
-        assertThat(connection.getPasswordPolicy(), is(PasswordStrength.GOOD));
+        PasswordComplexity passwordComplexity = connection.getPasswordComplexity();
+        assertThat(passwordComplexity.getPasswordPolicy(), is(PasswordStrength.GOOD));
+        assertThat(passwordComplexity.getMinLengthOverride(), is(nullValue()));
     }
 
     @Test
-    public void shouldGetLowPasswordPolicy() throws Exception {
+    public void shouldGetLowPasswordPolicy() {
         Map<String, Object> values = new HashMap<>();
         values.put("name", "Username-Password-Authentication");
         values.put("passwordPolicy", "low");
         DatabaseConnection connection = connectionFor(values);
 
-        assertThat(connection.getPasswordPolicy(), is(PasswordStrength.LOW));
+        PasswordComplexity passwordComplexity = connection.getPasswordComplexity();
+        assertThat(passwordComplexity.getPasswordPolicy(), is(PasswordStrength.LOW));
+        assertThat(passwordComplexity.getMinLengthOverride(), is(nullValue()));
     }
 
     @Test
-    public void shouldGetNonePasswordPolicy() throws Exception {
+    public void shouldGetNonePasswordPolicy() {
         Map<String, Object> values = new HashMap<>();
         values.put("name", "Username-Password-Authentication");
         DatabaseConnection connection = connectionFor(values);
 
-        assertThat(connection.getPasswordPolicy(), is(PasswordStrength.NONE));
+        PasswordComplexity passwordComplexity = connection.getPasswordComplexity();
+        assertThat(passwordComplexity.getPasswordPolicy(), is(PasswordStrength.NONE));
+        assertThat(passwordComplexity.getMinLengthOverride(), is(nullValue()));
     }
 
     @Test
-    public void shouldGetMinMaxUsernameLength() throws Exception {
+    public void shouldGetMinPasswordLength() {
+        Map<String, Object> values = new HashMap<>();
+        values.put("name", "Username-Password-Authentication");
+        Map<String, Object> options = new HashMap<>();
+        options.put("min_length", 123);
+        values.put("password_complexity_options", options);
+        DatabaseConnection connection = connectionFor(values);
+
+        PasswordComplexity passwordComplexity = connection.getPasswordComplexity();
+        assertThat(passwordComplexity.getPasswordPolicy(), is(PasswordStrength.NONE));
+        assertThat(passwordComplexity.getMinLengthOverride(), is(123));
+    }
+
+    @Test
+    public void shouldGetMinMaxUsernameLength() {
         Map<String, Object> values = new HashMap<>();
         values.put("name", "Username-Password-Authentication");
         Map<String, Object> validation = new HashMap<>();
@@ -139,7 +163,7 @@ public class DatabaseConnectionTest {
     }
 
     @Test
-    public void shouldGetNonEmptyMinMaxUsernameLengthIfMissingMinMaxValues() throws Exception {
+    public void shouldGetNonEmptyMinMaxUsernameLengthIfMissingMinMaxValues() {
         Map<String, Object> values = new HashMap<>();
         values.put("name", "Username-Password-Authentication");
         Map<String, Object> validation = new HashMap<>();
@@ -153,7 +177,7 @@ public class DatabaseConnectionTest {
     }
 
     @Test
-    public void shouldGetNonEmptyMinMaxUsernameLengthIfMissingUsernameValidation() throws Exception {
+    public void shouldGetNonEmptyMinMaxUsernameLengthIfMissingUsernameValidation() {
         Map<String, Object> values = new HashMap<>();
         values.put("name", "Username-Password-Authentication");
         Map<String, Object> validation = new HashMap<>();
@@ -165,7 +189,7 @@ public class DatabaseConnectionTest {
     }
 
     @Test
-    public void shouldGetNonEmptyMinMaxUsernameLengthIfMissingValidation() throws Exception {
+    public void shouldGetNonEmptyMinMaxUsernameLengthIfMissingValidation() {
         Map<String, Object> values = new HashMap<>();
         values.put("name", "Username-Password-Authentication");
         DatabaseConnection connection = connectionFor(values);
@@ -175,7 +199,7 @@ public class DatabaseConnectionTest {
     }
 
     @Test
-    public void shouldGetNonEmptyMinMaxUsernameLengthIfMaxIsLowerThanMin() throws Exception {
+    public void shouldGetNonEmptyMinMaxUsernameLengthIfMaxIsLowerThanMin() {
         Map<String, Object> values = new HashMap<>();
         values.put("name", "Username-Password-Authentication");
         Map<String, Object> validation = new HashMap<>();
@@ -191,7 +215,7 @@ public class DatabaseConnectionTest {
     }
 
     @Test
-    public void shouldGetNonEmptyMinMaxUsernameLengthIfMaxIsMissing() throws Exception {
+    public void shouldGetNonEmptyMinMaxUsernameLengthIfMaxIsMissing() {
         Map<String, Object> values = new HashMap<>();
         values.put("name", "Username-Password-Authentication");
         Map<String, Object> validation = new HashMap<>();
@@ -206,7 +230,7 @@ public class DatabaseConnectionTest {
     }
 
     @Test
-    public void shouldGetNonEmptyMinMaxUsernameLengthIfMinIsMissing() throws Exception {
+    public void shouldGetNonEmptyMinMaxUsernameLengthIfMinIsMissing() {
         Map<String, Object> values = new HashMap<>();
         values.put("name", "Username-Password-Authentication");
         Map<String, Object> validation = new HashMap<>();
@@ -221,7 +245,7 @@ public class DatabaseConnectionTest {
     }
 
     @Test
-    public void shouldBeCustomDatabaseIfMissingValidation() throws Exception {
+    public void shouldBeCustomDatabaseIfMissingValidation() {
         Map<String, Object> values = new HashMap<>();
         values.put("name", "Username-Password-Authentication");
         DatabaseConnection connection = connectionFor(values);
@@ -230,7 +254,7 @@ public class DatabaseConnectionTest {
     }
 
     @Test
-    public void shouldBeCustomDatabaseIfMissingUsernameValidation() throws Exception {
+    public void shouldBeCustomDatabaseIfMissingUsernameValidation() {
         Map<String, Object> values = new HashMap<>();
         values.put("name", "Username-Password-Authentication");
         Map<String, Object> validation = new HashMap<>();
@@ -241,7 +265,7 @@ public class DatabaseConnectionTest {
     }
 
     @Test
-    public void shouldNotBeCustomDatabaseIfContainsUsernameValidation() throws Exception {
+    public void shouldNotBeCustomDatabaseIfContainsUsernameValidation() {
         Map<String, Object> values = new HashMap<>();
         values.put("name", "Username-Password-Authentication");
         Map<String, Object> validation = new HashMap<>();
@@ -254,7 +278,7 @@ public class DatabaseConnectionTest {
     }
 
     @Test
-    public void shouldHaveName() throws Exception {
+    public void shouldHaveName() {
         Map<String, Object> values = new HashMap<>();
         values.put("name", "name");
         DatabaseConnection connection = connectionFor(values);
@@ -262,7 +286,7 @@ public class DatabaseConnectionTest {
     }
 
     @Test
-    public void shouldHaveStrategy() throws Exception {
+    public void shouldHaveStrategy() {
         Map<String, Object> values = new HashMap<>();
         values.put("name", "name");
         DatabaseConnection connection = connectionFor(values);
@@ -270,7 +294,7 @@ public class DatabaseConnectionTest {
     }
 
     @Test
-    public void shouldBeDatabaseType() throws Exception {
+    public void shouldBeDatabaseType() {
         Map<String, Object> values = new HashMap<>();
         values.put("name", "Username-Password-Authentication");
         DatabaseConnection connection = connectionFor(values);

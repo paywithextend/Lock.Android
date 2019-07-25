@@ -24,6 +24,7 @@
 
 package com.auth0.android.lock.views;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Typeface;
@@ -41,7 +42,6 @@ import android.text.TextWatcher;
 import android.text.method.PasswordTransformationMethod;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.util.Patterns;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -71,10 +71,10 @@ import static com.auth0.android.lock.views.ValidatedInputView.DataType.USERNAME_
 
 public class ValidatedInputView extends LinearLayout {
 
-    public static final String USERNAME_REGEX = "^[a-zA-Z0-9_]+$";
+    public static final String USERNAME_REGEX = "^[a-zA-Z0-9_@^$.#!`+\\-'~]+$";
     public static final String PHONE_NUMBER_REGEX = "^[0-9]{6,14}$";
     public static final String CODE_REGEX = "^[0-9]{4,12}$";
-    public static final String EMAIL_REGEX = Patterns.EMAIL_ADDRESS.pattern();
+    public static final String EMAIL_REGEX = "[a-zA-Z0-9-.!#$%&'*+–/=?^_`{|}~]{1,64}@[a-z0-9-.]{1,255}";
     private static final String TAG = ValidatedInputView.class.getSimpleName();
     private static final int VALIDATION_DELAY = 500;
 
@@ -128,10 +128,10 @@ public class ValidatedInputView extends LinearLayout {
         inflate(getContext(), R.layout.com_auth0_lock_validated_input_view, this);
 
         outline = findViewById(R.id.com_auth0_lock_outline);
-        errorDescription = (TextView) findViewById(R.id.errorDescription);
-        icon = (ImageView) findViewById(R.id.com_auth0_lock_icon);
-        input = (EditText) findViewById(R.id.com_auth0_lock_input);
-        showPasswordToggle = (ImageCheckbox) findViewById(R.id.com_auth0_lock_show_password_toggle);
+        errorDescription = findViewById(R.id.errorDescription);
+        icon = findViewById(R.id.com_auth0_lock_icon);
+        input = findViewById(R.id.com_auth0_lock_input);
+        showPasswordToggle = findViewById(R.id.com_auth0_lock_show_password_toggle);
         setOrientation(VERTICAL);
 
         if (isInEditMode()) {
@@ -139,7 +139,7 @@ public class ValidatedInputView extends LinearLayout {
         }
 
         if (attrs != null) {
-            TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.Lock_ValidatedInput);
+            @SuppressLint("CustomViewStyleable") TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.Lock_ValidatedInput);
             //noinspection WrongConstant
             dataType = a.getInt(R.styleable.Lock_ValidatedInput_Auth0_InputDataType, 0);
             a.recycle();
@@ -232,6 +232,7 @@ public class ValidatedInputView extends LinearLayout {
         }
     };
 
+    @SuppressLint("StringFormatInvalid")
     private void setupInputValidation() {
         String hint = "";
         String error = "";

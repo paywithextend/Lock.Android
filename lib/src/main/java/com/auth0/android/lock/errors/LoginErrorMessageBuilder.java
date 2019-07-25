@@ -42,7 +42,9 @@ public class LoginErrorMessageBuilder implements ErrorMessageBuilder<Authenticat
     private static final int userExistsResource = R.string.com_auth0_lock_db_signup_user_already_exists_error_message;
     private static final int unauthorizedResource = R.string.com_auth0_lock_db_login_error_unauthorized_message;
     private static final int invalidMFACodeResource = R.string.com_auth0_lock_db_login_error_invalid_mfa_code_message;
+    private static final int mfaEnrollRequiredResource = R.string.com_auth0_lock_db_login_error_mfa_enroll_required;
     private static final int tooManyAttemptsResource = R.string.com_auth0_lock_db_too_many_attempts_error_message;
+    private static final int passwordLeakedResource = R.string.com_auth0_lock_db_password_leaked_error_message;
 
     private int invalidCredentialsResource;
     private int defaultMessage;
@@ -63,10 +65,14 @@ public class LoginErrorMessageBuilder implements ErrorMessageBuilder<Authenticat
 
         if (exception.isInvalidCredentials()) {
             messageRes = invalidCredentialsResource;
-        } else if (exception.isMultifactorCodeInvalid()) {
+        } else if (exception.isMultifactorCodeInvalid() || exception.isMultifactorTokenInvalid()) {
             messageRes = invalidMFACodeResource;
+        } else if (exception.isMultifactorEnrollRequired()) {
+            messageRes = mfaEnrollRequiredResource;
         } else if (USER_EXISTS_ERROR.equals(exception.getCode()) || USERNAME_EXISTS_ERROR.equals(exception.getCode())) {
             messageRes = userExistsResource;
+        } else if (exception.isPasswordLeaked()) {
+            messageRes = passwordLeakedResource;
         } else if (exception.isRuleError()) {
             messageRes = unauthorizedResource;
             if (!USER_IS_BLOCKED_DESCRIPTION.equals(exception.getDescription())) {

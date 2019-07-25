@@ -2,9 +2,14 @@ package com.auth0.android.lock;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.net.Uri;
 
 import com.auth0.android.Auth0;
+import com.auth0.android.authentication.AuthenticationException;
 import com.auth0.android.lock.internal.configuration.Options;
 import com.auth0.android.provider.AuthCallback;
 import com.auth0.android.provider.AuthenticationActivity;
@@ -29,13 +34,16 @@ import static android.support.test.espresso.intent.matcher.UriMatchers.hasScheme
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(constants = BuildConfig.class, sdk = 21, manifest = "src/main/AndroidManifest.xml")
+@Config(sdk = 21)
 public class WebProviderTest {
 
     @Rule
@@ -44,26 +52,44 @@ public class WebProviderTest {
     private Activity activity;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         activity = spy(Robolectric.buildActivity(Activity.class)
                 .create()
                 .start()
                 .resume()
                 .get());
+        prepareBrowserApp(true);
     }
 
     @Test
-    public void shouldStart() throws Exception {
+    public void shouldStart() {
         Options options = new Options();
         options.setAccount(new Auth0("clientId", "domain.auth0.com"));
         AuthCallback callback = mock(AuthCallback.class);
         WebProvider webProvider = new WebProvider(options);
 
         webProvider.start(activity, "my-connection", null, callback, 123);
+        verify(callback, never()).onFailure(any(AuthenticationException.class));
     }
 
     @Test
-    public void shouldStartWithCustomAuthenticationParameters() throws Exception {
+    public void shouldFailWhenBrowserAppIsMissing() {
+        prepareBrowserApp(false);
+
+        Options options = new Options();
+        options.setAccount(new Auth0("clientId", "domain.auth0.com"));
+        AuthCallback callback = mock(AuthCallback.class);
+        WebProvider webProvider = new WebProvider(options);
+        webProvider.start(activity, "my-connection", null, callback, 123);
+
+        ArgumentCaptor<AuthenticationException> exceptionCaptor = ArgumentCaptor.forClass(AuthenticationException.class);
+        verify(callback).onFailure(exceptionCaptor.capture());
+        assertThat(exceptionCaptor.getValue(), is(notNullValue()));
+        assertThat(exceptionCaptor.getValue().isBrowserAppNotAvailable(), is(true));
+    }
+
+    @Test
+    public void shouldStartWithCustomAuthenticationParameters() {
         Auth0 account = new Auth0("clientId", "domain.auth0.com");
         account.setOIDCConformant(true);
         Options options = new Options();
@@ -82,6 +108,7 @@ public class WebProviderTest {
         webProvider.start(activity, "my-connection", parameters, callback, 123);
         ArgumentCaptor<Intent> intentCaptor = ArgumentCaptor.forClass(Intent.class);
         verify(activity).startActivity(intentCaptor.capture());
+        verify(callback, never()).onFailure(any(AuthenticationException.class));
 
         Intent intent = intentCaptor.getValue();
         assertThat(intent, is(notNullValue()));
@@ -98,7 +125,7 @@ public class WebProviderTest {
     }
 
     @Test
-    public void shouldStartWithCustomAudience() throws Exception {
+    public void shouldStartWithCustomAudience() {
         Auth0 account = new Auth0("clientId", "domain.auth0.com");
         account.setOIDCConformant(true);
         Options options = new Options();
@@ -113,6 +140,7 @@ public class WebProviderTest {
         webProvider.start(activity, "my-connection", null, callback, 123);
         ArgumentCaptor<Intent> intentCaptor = ArgumentCaptor.forClass(Intent.class);
         verify(activity).startActivity(intentCaptor.capture());
+        verify(callback, never()).onFailure(any(AuthenticationException.class));
 
         Intent intent = intentCaptor.getValue();
         assertThat(intent, is(notNullValue()));
@@ -127,7 +155,7 @@ public class WebProviderTest {
     }
 
     @Test
-    public void shouldStartBrowserWithOptions() throws Exception {
+    public void shouldStartBrowserWithOptions() {
         Auth0 account = new Auth0("clientId", "domain.auth0.com");
         Options options = new Options();
         options.setAccount(account);
@@ -147,6 +175,7 @@ public class WebProviderTest {
         webProvider.start(activity, "my-connection", null, callback, 123);
         ArgumentCaptor<Intent> intentCaptor = ArgumentCaptor.forClass(Intent.class);
         verify(activity).startActivity(intentCaptor.capture());
+        verify(callback, never()).onFailure(any(AuthenticationException.class));
 
         Intent intent = intentCaptor.getValue();
         assertThat(intent, is(notNullValue()));
@@ -170,7 +199,7 @@ public class WebProviderTest {
     }
 
     @Test
-    public void shouldStartWebViewWithOptions() throws Exception {
+    public void shouldStartWebViewWithOptions() {
         Auth0 account = new Auth0("clientId", "domain.auth0.com");
         Options options = new Options();
         options.setAccount(account);
@@ -190,6 +219,7 @@ public class WebProviderTest {
         webProvider.start(activity, "my-connection", null, callback, 123);
         ArgumentCaptor<Intent> intentCaptor = ArgumentCaptor.forClass(Intent.class);
         verify(activity).startActivityForResult(intentCaptor.capture(), eq(123));
+        verify(callback, never()).onFailure(any(AuthenticationException.class));
 
         Intent intent = intentCaptor.getValue();
         assertThat(intent, is(notNullValue()));
@@ -213,7 +243,7 @@ public class WebProviderTest {
     }
 
     @Test
-    public void shouldResumeWithIntent() throws Exception {
+    public void shouldResumeWithIntent() {
         Intent intent = mock(Intent.class);
         Options options = mock(Options.class);
         WebProvider webProvider = new WebProvider(options);
@@ -221,11 +251,28 @@ public class WebProviderTest {
     }
 
     @Test
-    public void shouldResumeWithCodesAndIntent() throws Exception {
+    public void shouldResumeWithCodesAndIntent() {
         Intent intent = mock(Intent.class);
         Options options = mock(Options.class);
         WebProvider webProvider = new WebProvider(options);
         assertThat(webProvider.resume(1, Activity.RESULT_CANCELED, intent), is(false));
+    }
+
+
+    private void prepareBrowserApp(boolean isAppInstalled) {
+        PackageManager pm = mock(PackageManager.class);
+        ResolveInfo info = null;
+        if (isAppInstalled) {
+            info = mock(ResolveInfo.class);
+            ApplicationInfo appInfo = mock(ApplicationInfo.class);
+            appInfo.packageName = "com.auth0.test";
+            ActivityInfo actInfo = mock(ActivityInfo.class);
+            actInfo.applicationInfo = appInfo;
+            actInfo.name = "Auth0 Browser";
+            info.activityInfo = actInfo;
+        }
+        when(pm.resolveActivity(any(Intent.class), eq(PackageManager.MATCH_DEFAULT_ONLY))).thenReturn(info);
+        when(activity.getPackageManager()).thenReturn(pm);
     }
 
 }
