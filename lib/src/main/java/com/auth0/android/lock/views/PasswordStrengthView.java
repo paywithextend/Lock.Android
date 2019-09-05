@@ -28,6 +28,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -103,8 +104,8 @@ public class PasswordStrengthView extends LinearLayout {
         optionSpecialCharacters = findViewById(R.id.com_auth0_lock_password_strength_option_special_characters);
 
         if (normalTextColor != -1) {
-            mustHave.setTextColor(normalTextColor);
-            titleAtLeast.setTextColor(normalTextColor);
+            mustHave.setTextColor(ContextCompat.getColor(getContext(), normalTextColor));
+            titleAtLeast.setTextColor(ContextCompat.getColor(getContext(), normalTextColor));
 
             optionLength.setNormalTextColor(normalTextColor);
             optionIdenticalCharacters.setNormalTextColor(normalTextColor);
@@ -112,8 +113,7 @@ public class PasswordStrengthView extends LinearLayout {
             optionUppercase.setNormalTextColor(normalTextColor);
             optionNumeric.setNormalTextColor(normalTextColor);
             optionSpecialCharacters.setNormalTextColor(normalTextColor);
-        }
-        if (successTextColor != -1) {
+        } if (successTextColor != -1) {
             optionLength.setSuccessTextColor(successTextColor);
             optionIdenticalCharacters.setSuccessTextColor(successTextColor);
             optionLowercase.setSuccessTextColor(successTextColor);
